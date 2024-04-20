@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Charge &amp; Go</string>
+    <string name="app_title">Charge &amp; Go</string>
+    <string name="app_logo">App Logo</string>
+    <string name="find_CS">Find your charging station</string>
+    <string name="login">Login</string>
+    <string name="signup">Sign Up</string>
+    <string name="createAccount">Create Account</string>
+    <string name="forgotpassword">Forgot Password</string>
+    <string name="my_map_api_key">AIzaSyBAjt7VV143sOS7_M0nQxpf-vwdGrlfzCc</string>
+</resources>
