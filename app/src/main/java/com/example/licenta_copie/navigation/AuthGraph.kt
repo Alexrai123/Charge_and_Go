@@ -12,10 +12,12 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController){
     navigation(route = Graph.AUTHENTICATION, startDestination = AuthScreen.Login.route){
         composable(route = AuthScreen.Login.route){
             LoginScreen(
-                onLogin = { navController.popBackStack()
+                onLogin = {
+                    navController.popBackStack()
                     navController.navigate(Graph.HOME)},
                 onSignup = { navController.navigate(AuthScreen.Signup.route) },
-                onForgotPassword = { navController.navigate(AuthScreen.ForgotPassword.route) })
+                onForgotPassword = { navController.navigate(AuthScreen.ForgotPassword.route) },
+            )
         }
         composable(route = AuthScreen.Signup.route){
             SignupScreen(

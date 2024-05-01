@@ -127,8 +127,11 @@ fun SignupScreen(onSign: () -> Unit) {
                     onClick = {
                         val user = User(email = emailInput, phoneNumber = phoneNumberInput, password = passwordInput)
                         CoroutineScope(Dispatchers.Main).launch {
-                            userRepository.insertUser(user)
-                            onSign()
+                            if(userRepository.userExists(emailInput, passwordInput) == false) {
+                                userRepository.insertUser(user)
+                                onSign()
+                            }
+                            else notification.value = "This user already exists!"
                         }
                     },
                     colors = ButtonDefaults.buttonColors(
