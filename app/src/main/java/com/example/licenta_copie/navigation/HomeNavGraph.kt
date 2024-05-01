@@ -13,6 +13,7 @@ import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.example.licenta_copie.Database.AppDatabase
+import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
 import com.example.licenta_copie.Database.OfflineRepository.OfflineReservationRepository
 import com.example.licenta_copie.ModelView.ReservationViewModel
 import com.example.licenta_copie.otherScreens.Bookings
@@ -23,7 +24,10 @@ import com.example.licenta_copie.otherScreens.Profile
 fun HomeNavGraph(navController: NavHostController) {
     NavHost(navController = navController, route = Graph.HOME, startDestination = BottomBarScreen.Profile.route){
         composable(route = BottomBarScreen.Profile.route){
-            var showDialog = remember { mutableStateOf(false) }
+            val carRepository = OfflineCarRepository(
+                carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
+            )
+            val showDialog = remember { mutableStateOf(false) }
             Profile(showDialog)
         }
         composable(route = BottomBarScreen.Map.route){

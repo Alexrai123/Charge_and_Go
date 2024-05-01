@@ -6,7 +6,6 @@ import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.Image
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,10 +15,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material3.Button
@@ -44,7 +41,10 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.licenta_copie.Database.AppDatabase
@@ -57,10 +57,10 @@ import com.example.licenta_copie.ui.theme.textFieldContainer
 import com.example.licenta_copie.ui.theme.unfocusedTextFieldText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
-//poza profil,schimba parola, adauga masina
 fun convertString(text: String): String {
     val alphabet = ('a'..'z').toList()
     val convertedChars = text.map { char ->
@@ -86,15 +86,93 @@ fun convertString(text: String): String {
     }
     return convertedChars.joinToString("")
 }
+fun convertStringToSymbols(input: String): String {
+    val symbols = mapOf(
+        'a' to "▲",
+        'b' to "●",
+        'c' to "■",
+        'd' to "★",
+        'e' to "♥",
+        'f' to "♦",
+        'g' to "♣",
+        'h' to "♠",
+        'i' to "♪",
+        'j' to "♫",
+        'k' to "♬",
+        'l' to "♭",
+        'm' to "♮",
+        'n' to "♯",
+        'o' to "⌘",
+        'p' to "⌥",
+        'q' to "⇧",
+        'r' to "⌃",
+        's' to "⇥",
+        't' to "⇪",
+        'u' to "←",
+        'v' to "→",
+        'w' to "↑",
+        'x' to "↓",
+        'y' to "↔",
+        'z' to "↕",
+        'A' to "▲",
+        'B' to "●",
+        'C' to "■",
+        'D' to "★",
+        'E' to "♥",
+        'F' to "♦",
+        'G' to "♣",
+        'H' to "♠",
+        'I' to "♪",
+        'J' to "♫",
+        'K' to "♬",
+        'L' to "♭",
+        'M' to "♮",
+        'N' to "♯",
+        'O' to "⌘",
+        'P' to "⌥",
+        'Q' to "⇧",
+        'R' to "⌃",
+        'S' to "⇥",
+        'T' to "⇪",
+        'U' to "←",
+        'V' to "→",
+        'W' to "↑",
+        'X' to "↓",
+        'Y' to "↔",
+        'Z' to "↕"
+    )
+
+    val convertedString = StringBuilder()
+
+    for (char in input) {
+        if (char in symbols) {
+            convertedString.append(symbols[char])
+        } else {
+            convertedString.append(char)
+        }
+    }
+
+    return convertedString.toString()
+}
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun Profile(showDialog: MutableState<Boolean>) {
+    //user
     var id by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
-    var notification = remember{ mutableStateOf("") }
+    //car
+    var carId by remember { mutableStateOf("") }
+    var model by remember { mutableStateOf("") }
+    var licensePlate by remember { mutableStateOf("") }
+    var batteryCapacity by remember { mutableStateOf("") }
+    val newCar by remember { mutableStateOf(Car()) }
+    val carRepository = OfflineCarRepository(
+        carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
+    )
+    val notification = remember{ mutableStateOf("") }
     if(notification.value.isNotEmpty()){
         Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
         notification.value = " "
@@ -102,17 +180,23 @@ fun Profile(showDialog: MutableState<Boolean>) {
     val userRepository = OfflineUserRepository(
         userDao = AppDatabase.getDatabase(LocalContext.current).userDao()
     )
-    val carRepository = OfflineCarRepository(
-        carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
-    )
     LaunchedEffect(email) {
         if(email.isNotEmpty()){
+            delay(500)
             val user = userRepository.getUserByEmail(email).firstOrNull()
             user?.let {
                 id = it.id.toString()
                 username = it.email.substringBefore('@')
                 phoneNumber = it.phoneNumber
                 password = it.password
+            }
+            delay(500)
+            val car = carRepository.getCarByOwnerId(id.toInt()).firstOrNull()
+            car?.let {
+                carId = it.id.toString()
+                model = it.model
+                licensePlate = it.licensePlate
+                batteryCapacity = it.batteryCapacity.toString()
             }
         }
     }
@@ -123,23 +207,12 @@ fun Profile(showDialog: MutableState<Boolean>) {
                 onClick = { showDialog.value = true },
                 content = { Icon(Icons.Default.AddCircle, contentDescription = "Add Car") }
             )
-        }
-    ) {
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(8.dp)
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp),
-                horizontalArrangement = Arrangement.SpaceBetween
-            ) {
-            }
-            ProfileImage()
-            Column {
-                Spacer(modifier = Modifier.height(15.dp))
+        },
+        content = {
+            Column(modifier = Modifier.padding(8.dp)) {
+                //ProfileImage()
+                Text(text = "User Information", modifier = Modifier.fillMaxWidth(),textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.ExtraBold, fontSize = 25.sp)
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -159,7 +232,7 @@ fun Profile(showDialog: MutableState<Boolean>) {
                         )
                     )
                 }
-                Spacer(modifier = Modifier.height(25.dp))
+                Spacer(modifier = Modifier.height(15.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -179,7 +252,7 @@ fun Profile(showDialog: MutableState<Boolean>) {
                         )
                     )
                 }
-                Spacer(modifier = Modifier.height(25.dp))
+                Spacer(modifier = Modifier.height(15.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -199,7 +272,7 @@ fun Profile(showDialog: MutableState<Boolean>) {
                         )
                     )
                 }
-                Spacer(modifier = Modifier.height(25.dp))
+                Spacer(modifier = Modifier.height(15.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -219,7 +292,7 @@ fun Profile(showDialog: MutableState<Boolean>) {
                         )
                     )
                 }
-                Spacer(modifier = Modifier.height(25.dp))
+                Spacer(modifier = Modifier.height(15.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -228,7 +301,89 @@ fun Profile(showDialog: MutableState<Boolean>) {
                 ) {
                     Text(text = "Password: ", modifier = Modifier.width(100.dp))
                     TextField(
-                        value = convertString(password),
+                        value = convertStringToSymbols(password),
+                        onValueChange = { },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(15.dp))
+                Text(text = "Car Information", modifier = Modifier.fillMaxWidth(),textAlign = TextAlign.Center,
+                    fontWeight = FontWeight.ExtraBold, fontSize = 25.sp)
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "Car ID: ", modifier = Modifier.width(100.dp))
+                    TextField(
+                        value = carId,
+                        onValueChange = { },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(15.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "Model: ", modifier = Modifier.width(100.dp))
+                    TextField(
+                        value = model,
+                        onValueChange = { },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(15.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "License Plate: ", modifier = Modifier.width(100.dp))
+                    TextField(
+                        value = licensePlate,
+                        onValueChange = { },
+                        colors = TextFieldDefaults.colors(
+                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
+                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
+                        )
+                    )
+                }
+                Spacer(modifier = Modifier.height(15.dp))
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(start = 4.dp, end = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Text(text = "Battery Capacity: ", modifier = Modifier.width(100.dp))
+                    TextField(
+                        value = batteryCapacity,
                         onValueChange = { },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
@@ -241,19 +396,19 @@ fun Profile(showDialog: MutableState<Boolean>) {
                 }
             }
         }
-    }
+    )
     if(showDialog.value) {
-        val newCar by remember { mutableStateOf(Car()) }
-        var carRepository = OfflineCarRepository(
-            carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
-        )
+        newCar.ownerId = id.toInt()
         Dialog(onDismissRequest = { showDialog.value = false },
             properties = DialogProperties(
                 dismissOnClickOutside = false,
                 dismissOnBackPress = false
             )
         ){
-            Card(modifier = Modifier.fillMaxWidth().height(455.dp).padding(16.dp),
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .height(455.dp)
+                .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -262,34 +417,30 @@ fun Profile(showDialog: MutableState<Boolean>) {
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     TextField(//model
-                        value = newCar.model,
-                        onValueChange = {
-                            newCar.model = it
-                        },
+                        value = model,
+                        onValueChange = { model = it },
                         label = { Text("Model of Car") }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     TextField(//licensePlate
-                        value = newCar.licensePlate,
-                        onValueChange = {
-                            newCar.licensePlate = it
-                        },
-                        label = { Text("ID of Car") }
+                        value = licensePlate,
+                        onValueChange = { licensePlate = it },
+                        label = { Text("License plate number") }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
                     TextField(//capacitate baterie
-                        value = newCar.batteryCapacity.toString(),
-                        onValueChange = { newCar.batteryCapacity = it.toIntOrNull() ?:0 },
+                        value = batteryCapacity,
+                        onValueChange = { batteryCapacity = it },
                         label = { Text("Battery Capacity") }
                     )
                     Button(modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             CoroutineScope(Dispatchers.Main).launch {
-                                //if (/*verifici daca toate tf nu is goale*/) {
-                                //seteaza ownerId din profil, afiseaza si id
-                                //carRepository.insertCar(newCar)
+                                newCar.model = model
+                                newCar.licensePlate = licensePlate
+                                newCar.batteryCapacity = batteryCapacity.toInt()
+                                carRepository.insertCar(newCar)
                                 showDialog.value = false
-                                //}
                             }
                         }
                     ) {
@@ -303,7 +454,7 @@ fun Profile(showDialog: MutableState<Boolean>) {
 @Composable
 fun ProfileImage(){
     val imageUrl = rememberSaveable { mutableStateOf("") }
-    val launcher = rememberLauncherForActivityResult(
+    rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ){ uri: Uri? -> uri?.let { imageUrl.value = it.toString() }
     }

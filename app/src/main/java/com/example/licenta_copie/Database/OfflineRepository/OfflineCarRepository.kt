@@ -7,7 +7,8 @@ import kotlinx.coroutines.flow.Flow
 
 class OfflineCarRepository(private val carDao: CarDao) : CarRepository {
     override fun getAllCarsStream(): Flow<List<Car>> = carDao.getAllCars()
-    override fun getCarStream(id: Int): Flow<Car?> = carDao.getCarById(id)
+    override fun getCarByOwnerId(ownerId: Int): Flow<Car?> = carDao.getCarByOwnerId(ownerId)
+    override fun getCarById(id: Int): Flow<Car?> = carDao.getCarById(id)
     override suspend fun insertCar(car: Car) = carDao.insert(car)
 
     override suspend fun deleteCar(car: Car) = carDao.delete(car)

@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.Flow
 interface CarDao {
     @Query("SELECT * from Car")
     fun getAllCars(): Flow<List<Car>>
+    @Query("SELECT * from Car WHERE ownerId = :ownerId")
+    fun getCarByOwnerId(ownerId: Int): Flow<Car?>
     @Query("SELECT * from Car WHERE id = :id")
     fun getCarById(id: Int): Flow<Car>
     @Insert(onConflict = OnConflictStrategy.ABORT)
