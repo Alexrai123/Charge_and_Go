@@ -19,10 +19,10 @@ import androidx.room.PrimaryKey
 ])
 data class Reservation(
     @PrimaryKey(autoGenerate = true)
-    val idReservation: Int = 0,
-    val idOfChargingStation: Int,
-    val idOfUser: Int,
-    val StartChargeTime: String,
-    val EndChargeTime: String,
-    val totalCost: Int
+    var idReservation: Int = 0,
+    var idOfChargingStation: Int = -1,
+    val idOfUser: Int = -1,
+    var StartChargeTime: String = "00:00",
+    var EndChargeTime: String = "00:00",
+    val totalCost: Int = 0
 )

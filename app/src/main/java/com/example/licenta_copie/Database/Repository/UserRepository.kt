@@ -9,6 +9,9 @@ interface UserRepository {
     fun getAllUsersStream(): Flow<List<User>>
     fun getUserStream(id: Int): Flow<User?>
     fun getUserByEmailAndPassword(email: String, password: String): Flow<User?>
+    fun getUserIdByEmailAndPassword(email: String, password: String): Flow<Int?>
+    fun getUserByEmail(email: String): Flow<User?>
+    fun getUserById(id: Int): Flow<User?>
     suspend fun userExists(email: String, password: String): Boolean
     suspend fun insertUser(user: User)
     suspend fun deleteUser(user: User)

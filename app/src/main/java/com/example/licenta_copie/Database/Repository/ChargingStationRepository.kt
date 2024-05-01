@@ -5,7 +5,7 @@ import kotlinx.coroutines.flow.Flow
 
 interface ChargingStationRepository {
     fun getAllChargingStationsStream(): Flow<List<ChargingStation>>
-    fun getChargingStationStream(id: Int): Flow<ChargingStation?>
+    fun getChargingStationById(id: Int): Flow<ChargingStation?>
     suspend fun insertChargingStation(chargingStation: ChargingStation)
     suspend fun deleteChargingStation(chargingStation: ChargingStation)
     suspend fun updateChargingStation(chargingStation: ChargingStation)

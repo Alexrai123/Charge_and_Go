@@ -10,8 +10,8 @@ import androidx.room.PrimaryKey
 data class Car(
     @PrimaryKey(autoGenerate = true)
     val id: Int = 0,
-    var ownerId: Int,
-    val model: String,
-    val licensePlate: String,
-    val batteryCapacity: Int
+    var ownerId: Int = 0,
+    var model: String = "",
+    var licensePlate: String = "",
+    var batteryCapacity: Int = 0
 )

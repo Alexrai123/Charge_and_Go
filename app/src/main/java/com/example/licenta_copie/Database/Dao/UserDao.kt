@@ -19,10 +19,14 @@ interface UserDao {
     fun getPasswordByEmail(email: String): Flow<String?>
     @Query("SELECT * FROM User WHERE (email = :email AND password = :password)")
     fun getUserByEmailAndPassword(email: String, password: String): Flow<User?>
+    @Query("SELECT id FROM User WHERE (email = :email AND password = :password)")
+    fun getUserIDByEmailAndPassword(email: String, password: String): Flow<Int?>
+    @Query("SELECT * FROM User WHERE (email = :email)")
+    fun getUserByEmail(email: String): Flow<User?>
     @Query("SELECT * from User")
     fun getAllUsers(): Flow<List<User>>
     @Query("SELECT * from User WHERE id = :id")
-    fun getUserById(id: Int): Flow<User>
+    fun getUserById(id: Int): Flow<User?>
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(user: User)
     @Update
