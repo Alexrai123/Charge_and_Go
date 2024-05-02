@@ -51,6 +51,7 @@ import com.example.licenta_copie.Database.AppDatabase
 import com.example.licenta_copie.Database.Entity.Car
 import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
 import com.example.licenta_copie.Database.OfflineRepository.OfflineUserRepository
+import com.example.licenta_copie.ModelView.SharedViewModel
 import com.example.licenta_copie.R
 import com.example.licenta_copie.ui.theme.focusedTextFieldText
 import com.example.licenta_copie.ui.theme.textFieldContainer
@@ -86,77 +87,18 @@ fun convertString(text: String): String {
     }
     return convertedChars.joinToString("")
 }
-fun convertStringToSymbols(input: String): String {
-    val symbols = mapOf(
-        'a' to "▲",
-        'b' to "●",
-        'c' to "■",
-        'd' to "★",
-        'e' to "♥",
-        'f' to "♦",
-        'g' to "♣",
-        'h' to "♠",
-        'i' to "♪",
-        'j' to "♫",
-        'k' to "♬",
-        'l' to "♭",
-        'm' to "♮",
-        'n' to "♯",
-        'o' to "⌘",
-        'p' to "⌥",
-        'q' to "⇧",
-        'r' to "⌃",
-        's' to "⇥",
-        't' to "⇪",
-        'u' to "←",
-        'v' to "→",
-        'w' to "↑",
-        'x' to "↓",
-        'y' to "↔",
-        'z' to "↕",
-        'A' to "▲",
-        'B' to "●",
-        'C' to "■",
-        'D' to "★",
-        'E' to "♥",
-        'F' to "♦",
-        'G' to "♣",
-        'H' to "♠",
-        'I' to "♪",
-        'J' to "♫",
-        'K' to "♬",
-        'L' to "♭",
-        'M' to "♮",
-        'N' to "♯",
-        'O' to "⌘",
-        'P' to "⌥",
-        'Q' to "⇧",
-        'R' to "⌃",
-        'S' to "⇥",
-        'T' to "⇪",
-        'U' to "←",
-        'V' to "→",
-        'W' to "↑",
-        'X' to "↓",
-        'Y' to "↔",
-        'Z' to "↕"
-    )
-
+fun convertStringToStars(input: String): String {
     val convertedString = StringBuilder()
 
-    for (char in input) {
-        if (char in symbols) {
-            convertedString.append(symbols[char])
-        } else {
-            convertedString.append(char)
-        }
+    for (i in input.indices) {
+        convertedString.append("*")
     }
 
     return convertedString.toString()
 }
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun Profile(showDialog: MutableState<Boolean>) {
+fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel) {
     //user
     var id by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -180,8 +122,16 @@ fun Profile(showDialog: MutableState<Boolean>) {
     val userRepository = OfflineUserRepository(
         userDao = AppDatabase.getDatabase(LocalContext.current).userDao()
     )
+    email = sharedViewModel.user_email.value.toString()
     LaunchedEffect(email) {
-        if(email.isNotEmpty()){
+        id = ""
+        username = ""
+        phoneNumber = ""
+        carId = ""
+        model = ""
+        licensePlate = ""
+        batteryCapacity = ""
+        if(email.isNotEmpty() ){
             delay(500)
             val user = userRepository.getUserByEmail(email).firstOrNull()
             user?.let {
@@ -242,7 +192,7 @@ fun Profile(showDialog: MutableState<Boolean>) {
                     Text(text = "Email: ", modifier = Modifier.width(100.dp))
                     TextField(
                         value = email,
-                        onValueChange = { email = it },
+                        onValueChange = {  },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
                             unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
@@ -301,8 +251,8 @@ fun Profile(showDialog: MutableState<Boolean>) {
                 ) {
                     Text(text = "Password: ", modifier = Modifier.width(100.dp))
                     TextField(
-                        value = convertStringToSymbols(password),
-                        onValueChange = { },
+                        value = convertStringToStars(password),
+                        onValueChange = {  },
                         colors = TextFieldDefaults.colors(
                             focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
                             unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
@@ -450,6 +400,8 @@ fun Profile(showDialog: MutableState<Boolean>) {
             }
         }
     }
+    sharedViewModel.car_id.value = carId
+    sharedViewModel.user_id.value = id
 }
 @Composable
 fun ProfileImage(){

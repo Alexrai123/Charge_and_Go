@@ -15,6 +15,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -26,6 +27,7 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
@@ -36,16 +38,23 @@ import com.example.licenta_copie.Database.Entity.Reservation
 import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
 import com.example.licenta_copie.Database.OfflineRepository.OfflineReservationRepository
 import com.example.licenta_copie.ModelView.ReservationViewModel
+import com.example.licenta_copie.ModelView.SharedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import java.time.LocalDate
+import java.time.LocalTime
 
 //id, id statie, *id user, start ch time, end ch time, cost
 
-fun calculateChargeTime(batteryCapacity: Int, chargePower: Int): Int{
-    var totalTime: Int = 0
-
-    return totalTime;
+fun calculateChargingTime(
+    batteryCapacity: Int, // Battery capacity in kWh
+    initialSOC: Int = 0, // Initial state of charge in percentage
+    desiredSOC: Int = 100, // Desired state of charge in percentage
+    chargingPower: Double // Charging power in kW
+): Double {
+    val chargingTimeMinutes = (batteryCapacity * (desiredSOC - initialSOC) / chargingPower) * 60
+    return chargingTimeMinutes
 }
 @Composable
 fun ReservationCard(reservation: Reservation){
@@ -68,9 +77,10 @@ fun ReservationCard(reservation: Reservation){
     }
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableState<Boolean>) {
+fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel) {
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
     Scaffold(
         floatingActionButton = {
@@ -92,9 +102,9 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
             }
         }
     )
-    if(showDialog.value){//numere masina (adauga in profil sa apara id la masina)
-        val time: Int = 0
+    if(showDialog.value){ //ADAUGA ZIUA LUNA AN
         val newReservation by remember { mutableStateOf(Reservation()) }
+        newReservation.idOfUser = sharedViewModel.user_id.value?.toInt() ?: -1
         val reservationRepository = OfflineReservationRepository(
             reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
         )
@@ -106,7 +116,10 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                 dismissOnClickOutside = false,
                 dismissOnBackPress = false
             )) {
-            Card(modifier = Modifier.fillMaxWidth().height(455.dp).padding(16.dp),
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .height(455.dp)
+                .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
                 Column(modifier = Modifier.padding(16.dp)) {
@@ -122,17 +135,11 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         label = { Text("ID of Charging Station") }
                     )
                     Spacer(modifier = Modifier.height(8.dp))
-                    TextField(//pui id de la masina si vezi in profil datele(ca la profil), sa iti ia capacitatea bateriei
-                        value = newReservation.idOfChargingStation.toString(),
-                        onValueChange = {
-                            newReservation.idOfChargingStation = it.toIntOrNull() ?: 0
-                        },
-                        label = { Text("ID of Car") }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    //minute aprox. sa iti incarci masina 0-100
-                    Text(text = "You need at least $time minutes to charge your car from 0% to 100%!")
-                    Spacer(modifier = Modifier.height(8.dp))
+//                    val idOfCar = sharedViewModel.car_id.value?.toInt() ?: -1
+//                    val batteryCapacity: Int = carRepository.getBatteryCapacityById(idOfCar).first()
+//                    val time = calculateChargingTime(batteryCapacity, chargingPower = 100.0)
+//                    Text(text = "You need at least $time minutes to charge your car from 0% to 100%!")
+//                    Spacer(modifier = Modifier.height(8.dp))
                     TextField(
                         value = newReservation.StartChargeTime,
                         onValueChange = { newReservation.StartChargeTime = it },
@@ -144,13 +151,14 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         onValueChange = { newReservation.EndChargeTime = it },
                         label = { Text("End charging time") }
                     )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    var pickedDate by remember { mutableStateOf(LocalDate.now()) }
+                    var pickedTime by remember { mutableStateOf(LocalTime.now()) }
                     Button(modifier = Modifier.fillMaxWidth(),
                         onClick = {
                             CoroutineScope(Dispatchers.Main).launch {
-                                //if (/*verifici daca toate tf nu is goale*/) {
                                 //reservationRepository.insertReservation(newReservation)
                                 showDialog.value = false
-                                //}
                             }
                         }
                     ) {

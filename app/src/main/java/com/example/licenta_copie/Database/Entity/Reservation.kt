@@ -21,7 +21,7 @@ data class Reservation(
     @PrimaryKey(autoGenerate = true)
     var idReservation: Int = 0,
     var idOfChargingStation: Int = -1,
-    val idOfUser: Int = -1,
+    var idOfUser: Int = -1,
     var StartChargeTime: String = "00:00",
     var EndChargeTime: String = "00:00",
     val totalCost: Int = 0

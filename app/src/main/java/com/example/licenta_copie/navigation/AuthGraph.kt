@@ -7,8 +7,9 @@ import androidx.navigation.navigation
 import com.example.licenta_copie.Authentication.ForgotPasswordScreen
 import com.example.licenta_copie.Authentication.LoginScreen
 import com.example.licenta_copie.Authentication.SignupScreen
+import com.example.licenta_copie.ModelView.SharedViewModel
 
-fun NavGraphBuilder.authNavGraph(navController: NavHostController){
+fun NavGraphBuilder.authNavGraph(navController: NavHostController, sharedViewModel: SharedViewModel){
     navigation(route = Graph.AUTHENTICATION, startDestination = AuthScreen.Login.route){
         composable(route = AuthScreen.Login.route){
             LoginScreen(
@@ -17,6 +18,7 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController){
                     navController.navigate(Graph.HOME)},
                 onSignup = { navController.navigate(AuthScreen.Signup.route) },
                 onForgotPassword = { navController.navigate(AuthScreen.ForgotPassword.route) },
+                sharedViewModel = sharedViewModel
             )
         }
         composable(route = AuthScreen.Signup.route){
