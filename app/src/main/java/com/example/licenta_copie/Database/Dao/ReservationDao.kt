@@ -15,6 +15,8 @@ interface ReservationDao {
     fun getAllReservations(): Flow<List<Reservation>>
     @Query("SELECT * from Reservation WHERE idReservation = :id")
     fun getReservationById(id: Int): Flow<Reservation>
+    @Query("SELECT * FROM Reservation ORDER BY date ASC")
+    fun getAllReservationsByData(): Flow<List<Reservation>>
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(reservation: Reservation)
     @Update

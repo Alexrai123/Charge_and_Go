@@ -22,7 +22,8 @@ data class Reservation(
     var idReservation: Int = 0,
     var idOfChargingStation: Int = -1,
     var idOfUser: Int = -1,
-    var StartChargeTime: String = "00:00",
-    var EndChargeTime: String = "00:00",
-    val totalCost: Int = 0
+    var date: String = "",
+    var StartChargeTime: String = "",
+    var EndChargeTime: String = "",
+    var totalCost: Int = 0
 )

@@ -2,12 +2,12 @@ package com.example.licenta_copie.otherScreens
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -35,15 +35,12 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.licenta_copie.Database.AppDatabase
 import com.example.licenta_copie.Database.Entity.Reservation
-import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
 import com.example.licenta_copie.Database.OfflineRepository.OfflineReservationRepository
 import com.example.licenta_copie.ModelView.ReservationViewModel
 import com.example.licenta_copie.ModelView.SharedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import java.time.LocalDate
-import java.time.LocalTime
 
 //id, id statie, *id user, start ch time, end ch time, cost
 
@@ -60,19 +57,20 @@ fun calculateChargingTime(
 fun ReservationCard(reservation: Reservation){
     Card(modifier = Modifier
         .padding(8.dp)
-        .width(200.dp), shape = RoundedCornerShape(8.dp)){
+        .fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp)){
         Column(modifier = Modifier.padding(16.dp)){
             //id rezervare
-            Text(text = reservation.idReservation.toString())
+            Text(text = "Reservation ID: "+reservation.idReservation.toString())
             Spacer(modifier = Modifier.height(20.dp))
             //id statie incarcare
-            Text(text = reservation.idReservation.toString())
+            Text(text = "Charging Station ID: "+reservation.idReservation.toString())
             Spacer(modifier = Modifier.height(20.dp))
             //startCh-endCh
-            Text(text = reservation.StartChargeTime+"-"+reservation.EndChargeTime)
+            Text(text = "Time: "+reservation.StartChargeTime+"-"+reservation.EndChargeTime)
             Spacer(modifier = Modifier.height(20.dp))
-            //pret(treb calculat)
-            Text(text = reservation.totalCost.toString()+"lei")
+            //pret(treb calculat), vine charge time de mai sus * chargePower din charging station(get charging power from id of charging station)
+            Text(text = "Total Price: "+reservation.totalCost.toString()+" lei")
         }
     }
 }
@@ -81,8 +79,16 @@ fun ReservationCard(reservation: Reservation){
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel) {
+    var idChargingStation by remember { mutableStateOf("") }
+    var idUser by remember { mutableStateOf("") }
+    var date by remember { mutableStateOf("") }
+    var startChargeTime by remember { mutableStateOf("") }
+    var endChargeTime by remember { mutableStateOf("") }
+    var cost by remember { mutableStateOf("") }
+    val newReservation by remember { mutableStateOf(Reservation()) }
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
     Scaffold(
+        modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(bottom = 75.dp),
@@ -103,13 +109,9 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
         }
     )
     if(showDialog.value){ //ADAUGA ZIUA LUNA AN
-        val newReservation by remember { mutableStateOf(Reservation()) }
-        newReservation.idOfUser = sharedViewModel.user_id.value?.toInt() ?: -1
+        idUser = sharedViewModel.user_id.value.toString()
         val reservationRepository = OfflineReservationRepository(
             reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
-        )
-        var carRepository = OfflineCarRepository(
-            carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
         )
         Dialog(onDismissRequest = { showDialog.value = false },
             properties = DialogProperties(
@@ -128,41 +130,56 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     TextField(//id of charging station
-                        value = newReservation.idOfChargingStation.toString(),
+                        value = idChargingStation,
                         onValueChange = {
-                            newReservation.idOfChargingStation = it.toIntOrNull() ?: 0
+                            idChargingStation = it
                         },
                         label = { Text("ID of Charging Station") }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-//                    val idOfCar = sharedViewModel.car_id.value?.toInt() ?: -1
-//                    val batteryCapacity: Int = carRepository.getBatteryCapacityById(idOfCar).first()
-//                    val time = calculateChargingTime(batteryCapacity, chargingPower = 100.0)
-//                    Text(text = "You need at least $time minutes to charge your car from 0% to 100%!")
-//                    Spacer(modifier = Modifier.height(8.dp))
+                        //data
                     TextField(
-                        value = newReservation.StartChargeTime,
-                        onValueChange = { newReservation.StartChargeTime = it },
-                        label = { Text("Start charging time") }
+                        value = date,
+                        onValueChange = {date = it},
+                        label = { Text("Date") }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
+                    //startTime si endTime
                     TextField(
-                        value = newReservation.EndChargeTime,
-                        onValueChange = { newReservation.EndChargeTime = it },
-                        label = { Text("End charging time") }
+                        value = startChargeTime,
+                        onValueChange = {startChargeTime = it},
+                        label = { Text("Start Time") }
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    var pickedDate by remember { mutableStateOf(LocalDate.now()) }
-                    var pickedTime by remember { mutableStateOf(LocalTime.now()) }
-                    Button(modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                //reservationRepository.insertReservation(newReservation)
+                    TextField(
+                        value = endChargeTime,
+                        onValueChange = {endChargeTime = it},
+                        label = { Text("End Time") }
+                    )
+                    Row {
+                        Button(onClick = {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    newReservation.idOfChargingStation = idChargingStation.toInt()
+                                    newReservation.idOfUser = idUser.toInt()
+                                    newReservation.date = date
+                                    newReservation.StartChargeTime = startChargeTime
+                                    newReservation.EndChargeTime = endChargeTime
+                                    newReservation.totalCost = 100
+                                    reservationRepository.insertReservation(newReservation)
+                                    showDialog.value = false
+                                }
+                            }
+                        ) {
+                            Text("Submit")
+                        }
+                        Button(onClick = {
+                                newReservation.idOfChargingStation = 0
+                                newReservation.StartChargeTime = ""
+                                newReservation.EndChargeTime = ""
+                                newReservation.date = ""
+                                newReservation.totalCost = 0
                                 showDialog.value = false
                             }
+                        ) {
+                            Text("Cancel")
                         }
-                    ) {
-                        Text("Submit")
                     }
                 }
             }
