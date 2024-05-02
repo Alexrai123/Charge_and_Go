@@ -143,6 +143,7 @@ fun LoginScreen(
                             val userExist = userRepository.userExists(email, password)
                             if (userExist) {
                                 sharedViewModel.user_email.value = email
+                                sharedViewModel.user_password.value = password
                                 notification.value = "Succesfull logged in!"
                                 onLogin()
                             }

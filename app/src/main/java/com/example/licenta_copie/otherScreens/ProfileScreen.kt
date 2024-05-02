@@ -123,7 +123,8 @@ fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel)
         userDao = AppDatabase.getDatabase(LocalContext.current).userDao()
     )
     email = sharedViewModel.user_email.value.toString()
-    LaunchedEffect(email) {
+    password = sharedViewModel.user_password.value.toString()
+    LaunchedEffect(email, password) {
         id = ""
         username = ""
         phoneNumber = ""
@@ -131,14 +132,13 @@ fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel)
         model = ""
         licensePlate = ""
         batteryCapacity = ""
-        if(email.isNotEmpty() ){
+        if(email.isNotEmpty() && password.isNotEmpty()){
             delay(500)
-            val user = userRepository.getUserByEmail(email).firstOrNull()
+            val user = userRepository.getUserByEmailAndPassword(email, password).firstOrNull()
             user?.let {
                 id = it.id.toString()
                 username = it.email.substringBefore('@')
                 phoneNumber = it.phoneNumber
-                password = it.password
             }
             delay(500)
             val car = carRepository.getCarByOwnerId(id.toInt()).firstOrNull()
@@ -383,18 +383,29 @@ fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel)
                         onValueChange = { batteryCapacity = it },
                         label = { Text("Battery Capacity") }
                     )
-                    Button(modifier = Modifier.fillMaxWidth(),
-                        onClick = {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                newCar.model = model
-                                newCar.licensePlate = licensePlate
-                                newCar.batteryCapacity = batteryCapacity.toInt()
-                                carRepository.insertCar(newCar)
+                    Row (modifier = Modifier.fillMaxWidth()){
+                        Button(onClick = {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    newCar.model = model
+                                    newCar.licensePlate = licensePlate
+                                    newCar.batteryCapacity = batteryCapacity.toInt()
+                                    carRepository.insertCar(newCar)
+                                    showDialog.value = false
+                                }
+                            }
+                        ) {
+                            Text("Submit")
+                        }
+                        Button(modifier = Modifier.fillMaxWidth(),
+                            onClick = {
+                                model = ""
+                                licensePlate = ""
+                                batteryCapacity = ""
                                 showDialog.value = false
                             }
+                        ) {
+                            Text("Cancel")
                         }
-                    ) {
-                        Text("Submit")
                     }
                 }
             }

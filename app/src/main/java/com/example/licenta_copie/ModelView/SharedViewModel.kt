@@ -7,4 +7,5 @@ class SharedViewModel: ViewModel() {
     val car_id = MutableLiveData<String>()
     var user_id = MutableLiveData<String>()
     var user_email = MutableLiveData<String>()
+    var user_password = MutableLiveData<String>()
 }
