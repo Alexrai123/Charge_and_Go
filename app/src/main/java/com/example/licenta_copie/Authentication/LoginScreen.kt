@@ -49,6 +49,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.licenta_copie.Database.AppDatabase
 import com.example.licenta_copie.Database.OfflineRepository.OfflineUserRepository
+import com.example.licenta_copie.ModelView.SharedViewModel
 import com.example.licenta_copie.R
 import com.example.licenta_copie.ui.theme.Black
 import com.example.licenta_copie.ui.theme.BlueGray
@@ -65,6 +66,7 @@ fun LoginScreen(
     onLogin: () -> Unit,
     onSignup: () -> Unit,
     onForgotPassword: () -> Unit,
+    sharedViewModel: SharedViewModel
 ) {
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
@@ -140,6 +142,7 @@ fun LoginScreen(
                         CoroutineScope(Dispatchers.Main).launch {
                             val userExist = userRepository.userExists(email, password)
                             if (userExist) {
+                                sharedViewModel.user_email.value = email
                                 notification.value = "Succesfull logged in!"
                                 onLogin()
                             }
