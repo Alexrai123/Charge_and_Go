@@ -13,6 +13,8 @@ import kotlinx.coroutines.flow.Flow
 interface ReservationDao {
     @Query("SELECT * from Reservation ORDER BY idReservation ASC")
     fun getAllReservations(): Flow<List<Reservation>>
+    @Query("SELECT * from Reservation WHERE idOfUser = :id")
+    fun getReservationsByUserId(id: Int): Flow<List<Reservation>>
     @Query("SELECT * from Reservation WHERE idReservation = :id")
     fun getReservationById(id: Int): Flow<Reservation>
     @Query("SELECT * FROM Reservation ORDER BY date ASC")

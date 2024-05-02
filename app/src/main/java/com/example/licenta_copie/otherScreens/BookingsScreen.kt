@@ -1,6 +1,7 @@
 package com.example.licenta_copie.otherScreens
 
 import android.annotation.SuppressLint
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,7 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Scaffold
@@ -29,6 +30,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -58,24 +60,27 @@ fun ReservationCard(reservation: Reservation){
     Card(modifier = Modifier
         .padding(8.dp)
         .fillMaxWidth(),
-        shape = RoundedCornerShape(8.dp)){
-        Column(modifier = Modifier.padding(16.dp)){
+        shape = RoundedCornerShape(8.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = Color(0xFFE0E0E0),
+            contentColor = Color(0xFF000000)),
+        border = BorderStroke(1.dp, Color.Black)
+    ){
+        Column(modifier = Modifier.padding(5.dp)){
             //id rezervare
             Text(text = "Reservation ID: "+reservation.idReservation.toString())
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             //id statie incarcare
             Text(text = "Charging Station ID: "+reservation.idReservation.toString())
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             //startCh-endCh
             Text(text = "Time: "+reservation.StartChargeTime+"-"+reservation.EndChargeTime)
-            Spacer(modifier = Modifier.height(20.dp))
+            Spacer(modifier = Modifier.height(5.dp))
             //pret(treb calculat), vine charge time de mai sus * chargePower din charging station(get charging power from id of charging station)
             Text(text = "Total Price: "+reservation.totalCost.toString()+" lei")
         }
     }
 }
-
-@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel) {
@@ -87,7 +92,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
     var cost by remember { mutableStateOf("") }
     val newReservation by remember { mutableStateOf(Reservation()) }
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
-    Scaffold(
+    Scaffold(//afiseaza lista doar pt user-ul ala
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(
@@ -102,13 +107,15 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                     .fillMaxSize()
                     .padding(8.dp)
             ) {
-                items(reservations) { reservation ->
+                items(reservations.filter { reservations ->
+                    reservations.idOfUser.toString() == sharedViewModel.user_id.value
+                }) { reservation ->
                     ReservationCard(reservation = reservation)
                 }
             }
         }
     )
-    if(showDialog.value){ //ADAUGA ZIUA LUNA AN
+    if(showDialog.value){
         idUser = sharedViewModel.user_id.value.toString()
         val reservationRepository = OfflineReservationRepository(
             reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
