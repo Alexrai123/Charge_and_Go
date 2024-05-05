@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -22,10 +23,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.licenta_copie.Database.Entity.ChargingStation
+import com.example.licenta_copie.ModelView.ChargingStationViewModel
 
 @Composable
 fun ReservationCard(chargingStation: ChargingStation){
@@ -59,7 +63,8 @@ fun ReservationCard(chargingStation: ChargingStation){
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun ChargingStations(goBack:() -> Unit){
+fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:() -> Unit){
+    val chargingStations by chargingStationViewModel.chargingStations.collectAsState(initial = emptyList())
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(text = "Charging Station") },
@@ -85,6 +90,11 @@ fun ChargingStations(goBack:() -> Unit){
                 .padding(contentPadding)
                 .fillMaxSize()) {
                 //afisezi tabela ChargingStation
+                LazyColumn(modifier = Modifier.padding(8.dp).fillMaxSize()){
+                    items(chargingStations.size){ index ->
+                        ReservationCard(chargingStation = chargingStations[index])
+                    }
+                }
             }
         }
     )

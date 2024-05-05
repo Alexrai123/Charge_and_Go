@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -21,10 +22,13 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.example.licenta_copie.Database.Entity.Car
+import com.example.licenta_copie.ModelView.CarViewModel
 
 @Composable
 fun CarCard(car: Car){
@@ -55,7 +59,8 @@ fun CarCard(car: Car){
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun Cars(goBack:() -> Unit){
+fun Cars(carViewModel: CarViewModel, goBack:() -> Unit){
+    val cars by carViewModel.cars.collectAsState(initial = emptyList())
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(text = "Cars") },
@@ -79,6 +84,11 @@ fun Cars(goBack:() -> Unit){
                 .padding(contentPadding)
                 .fillMaxSize()) {
                 //afisezi tabela Car
+                LazyColumn(modifier = Modifier.padding(8.dp).fillMaxSize()){
+                    items(cars.size){ index ->
+                        CarCard(car = cars[index])
+                    }
+                }
             }
         }
     )
