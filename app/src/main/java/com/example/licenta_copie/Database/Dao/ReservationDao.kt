@@ -19,6 +19,8 @@ interface ReservationDao {
     fun getReservationById(id: Int): Flow<Reservation>
     @Query("SELECT * FROM Reservation ORDER BY date ASC")
     fun getAllReservationsByData(): Flow<List<Reservation>>
+    @Query("DELETE FROM Reservation WHERE idReservation = :id")
+    suspend fun deleteReservationById(id: Int)
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(reservation: Reservation)
     @Update

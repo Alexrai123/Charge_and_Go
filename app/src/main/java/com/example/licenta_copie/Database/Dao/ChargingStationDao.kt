@@ -15,6 +15,8 @@ interface ChargingStationDao {
     fun getAllChargingStations(): Flow<List<ChargingStation>>
     @Query("SELECT * from ChargingStation WHERE id = :id")
     fun getChargingStationById(id: Int): Flow<ChargingStation>
+    @Query("DELETE FROM ChargingStation WHERE id = :id")
+    suspend fun deleteChargingStationById(id: Int)
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(chargingStation: ChargingStation)
     @Update

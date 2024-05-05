@@ -14,6 +14,7 @@ class OfflineUserRepository(private val userDao: UserDao) : UserRepository {
     override fun getUserIdByEmailAndPassword(email: String, password: String): Flow<Int?> = userDao.getUserIDByEmailAndPassword(email, password)
     override fun getUserByEmail(email: String): Flow<User?> = userDao.getUserByEmail(email)
     override fun getUserById(id: Int): Flow<User?> = userDao.getUserById(id)
+    override suspend fun deleteUserById(id: Int) = userDao.deleteUserById(id)
     override suspend fun userExists(email: String, password: String): Boolean = userDao.userExists(email, password)
     override suspend fun insertUser(user: User) = userDao.insert(user)
     override suspend fun deleteUser(user: User) = userDao.delete(user)

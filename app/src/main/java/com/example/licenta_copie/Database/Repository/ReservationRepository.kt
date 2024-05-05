@@ -8,6 +8,7 @@ interface ReservationRepository {
     fun getReservationsByUserId(id: Int): Flow<List<Reservation>>
     fun getReservationById(id: Int): Flow<Reservation?>
     fun getAllReservationsByData(): Flow<List<Reservation>>
+    suspend fun deleteReservationById(id: Int)
     suspend fun insertReservation(reservation: Reservation)
     suspend fun deleteReservation(reservation: Reservation)
     suspend fun updateReservation(reservation: Reservation)

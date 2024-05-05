@@ -127,7 +127,7 @@ fun SignupScreen(onSign: () -> Unit) {
                     onClick = {
                         val user = User(email = emailInput, phoneNumber = phoneNumberInput, password = passwordInput)
                         CoroutineScope(Dispatchers.Main).launch {
-                            if(userRepository.userExists(emailInput, passwordInput) == false) {
+                            if(!userRepository.userExists(emailInput, passwordInput)) {
                                 userRepository.insertUser(user)
                                 onSign()
                             }
