@@ -66,6 +66,7 @@ fun LoginScreen(
     onLogin: () -> Unit,
     onSignup: () -> Unit,
     onForgotPassword: () -> Unit,
+    onAdmin: () -> Unit,
     sharedViewModel: SharedViewModel
 ) {
     var email by remember { mutableStateOf("") }
@@ -139,7 +140,9 @@ fun LoginScreen(
                         .fillMaxWidth()
                         .height(40.dp),
                     onClick = {
-                        CoroutineScope(Dispatchers.Main).launch {
+                        if(email == "admin" && password == "admin")
+                            onAdmin()
+                        else CoroutineScope(Dispatchers.Main).launch {
                             val userExist = userRepository.userExists(email, password)
                             if (userExist) {
                                 sharedViewModel.user_email.value = email
