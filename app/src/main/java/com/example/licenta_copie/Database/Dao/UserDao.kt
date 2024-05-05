@@ -27,6 +27,8 @@ interface UserDao {
     fun getAllUsers(): Flow<List<User>>
     @Query("SELECT * from User WHERE id = :id")
     fun getUserById(id: Int): Flow<User?>
+    @Query("DELETE FROM User WHERE id = :id")
+    suspend fun deleteUserById(id: Int)
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(user: User)
     @Update

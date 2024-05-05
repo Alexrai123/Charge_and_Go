@@ -86,28 +86,37 @@ fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewMo
                 userDao = AppDatabase.getDatabase(LocalContext.current).userDao()
             )
             val userViewModel = UserViewModel(userRepository)
-            Users(userViewModel, goBack = { navController.popBackStack() })
+            val showDialogDelete = remember { mutableStateOf(false) }
+            val showDialogEdit = remember { mutableStateOf(false) }
+            Users(userViewModel, goBack = { navController.popBackStack() }, showDialogDelete, showDialogEdit)
         }
         composable(route = AuthScreen.Cars.route){
             val carRepository = OfflineCarRepository(
                 carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
             )
             val carViewModel = CarViewModel(carRepository)
-            Cars(carViewModel, goBack = { navController.popBackStack() })
+            val showDialogDelete = remember { mutableStateOf(false) }
+            val showDialogEdit = remember { mutableStateOf(false) }
+            Cars(carViewModel, goBack = { navController.popBackStack() }, showDialogDelete, showDialogEdit)
         }
         composable(route = AuthScreen.ChargingStations.route){
             val chargingStationRepository = OfflineChargingStationRepository(
                 chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
             )
             val chargingStationViewModel = ChargingStationViewModel(chargingStationRepository)
-            ChargingStations(chargingStationViewModel, goBack = { navController.popBackStack() })
+            val showDialogDelete = remember { mutableStateOf(false) }
+            val showDialogEdit = remember { mutableStateOf(false) }
+            val showDialogAdd = remember { mutableStateOf(false) }
+            ChargingStations(chargingStationViewModel, goBack = { navController.popBackStack() }, showDialogDelete, showDialogEdit, showDialogAdd)
         }
         composable(route = AuthScreen.Reservations.route){
             val reservationRepository = OfflineReservationRepository(
                 reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
             )
             val reservationViewModel = ReservationViewModel(reservationRepository)
-            Reservations(reservationViewModel, goBack = { navController.popBackStack() })
+            val showDialogDelete = remember { mutableStateOf(false) }
+            val showDialogEdit = remember { mutableStateOf(false) }
+            Reservations(reservationViewModel, goBack = { navController.popBackStack() }, showDialogDelete, showDialogEdit)
         }
     }
 }

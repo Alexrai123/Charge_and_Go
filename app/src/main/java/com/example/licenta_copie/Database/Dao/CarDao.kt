@@ -19,6 +19,8 @@ interface CarDao {
     fun getBatteryCapacityById(id: Int): Flow<Int>
     @Query("SELECT * from Car WHERE id = :id")
     fun getCarById(id: Int): Flow<Car>
+    @Query("DELETE FROM Car WHERE id = :id")
+    suspend fun deleteCarById(id: Int)
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(car: Car)
     @Update
