@@ -12,6 +12,14 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import com.example.licenta_copie.Admin.AdminPage
+import com.example.licenta_copie.Admin.Cars
+import com.example.licenta_copie.Admin.ChargingStations
+import com.example.licenta_copie.Admin.Reservations
+import com.example.licenta_copie.Admin.Users
+import com.example.licenta_copie.Authentication.ForgotPasswordScreen
+import com.example.licenta_copie.Authentication.LoginScreen
+import com.example.licenta_copie.Authentication.SignupScreen
 import com.example.licenta_copie.Database.AppDatabase
 import com.example.licenta_copie.Database.OfflineRepository.OfflineReservationRepository
 import com.example.licenta_copie.ModelView.ReservationViewModel
@@ -25,18 +33,59 @@ fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewMo
     NavHost(navController = navController, route = Graph.HOME, startDestination = BottomBarScreen.Profile.route){
         composable(route = BottomBarScreen.Profile.route){
             val showDialog = remember { mutableStateOf(false) }
-            Profile(showDialog, sharedViewModel)
+            Profile(showDialog, sharedViewModel, onLogout = { navController.navigate(AuthScreen.Login.route) })
         }
         composable(route = BottomBarScreen.Map.route){
-            MapScreen(navController = navController)
+            MapScreen()
         }
         composable(route = BottomBarScreen.Bookings.route){
             val reservationRepository = OfflineReservationRepository(
                 reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
             )
             val reservationViewModel = ReservationViewModel(reservationRepository)
-            var showDialog = remember { mutableStateOf(false) }
+            val showDialog = remember { mutableStateOf(false) }
             Bookings(reservationViewModel, showDialog, sharedViewModel)
+        }
+        composable(route = AuthScreen.Login.route){
+            LoginScreen(
+                onLogin = {
+                    navController.popBackStack()
+                    navController.navigate(Graph.HOME)},
+                onSignup = { navController.navigate(AuthScreen.Signup.route) },
+                onForgotPassword = { navController.navigate(AuthScreen.ForgotPassword.route) },
+                onAdmin = { navController.navigate(AuthScreen.AdminPage.route) },
+                sharedViewModel = sharedViewModel
+            )
+        }
+        composable(route = AuthScreen.Signup.route){
+            SignupScreen(
+                onSign = {navController.navigate(AuthScreen.Login.route)}
+            )
+        }
+        composable(route = AuthScreen.ForgotPassword.route){
+            ForgotPasswordScreen(
+                onForgot = {navController.navigate(AuthScreen.Login.route)}
+            )
+        }
+        composable(route = AuthScreen.AdminPage.route){
+            AdminPage(
+                onLogout = {navController.navigate(AuthScreen.Login.route)},
+                onUser = {navController.navigate(AuthScreen.Users.route)},
+                onCar = {navController.navigate(AuthScreen.Cars.route)},
+                onChargingStation = {navController.navigate(AuthScreen.ChargingStations.route)},
+                onReservation = {navController.navigate(AuthScreen.Reservations.route)})
+        }
+        composable(route = AuthScreen.Users.route){
+            Users(goBack = { navController.popBackStack() })
+        }
+        composable(route = AuthScreen.Cars.route){
+            Cars(goBack = { navController.popBackStack() })
+        }
+        composable(route = AuthScreen.ChargingStations.route){
+            ChargingStations(goBack = { navController.popBackStack() })
+        }
+        composable(route = AuthScreen.Reservations.route){
+            Reservations(goBack = { navController.popBackStack() })
         }
     }
 }
