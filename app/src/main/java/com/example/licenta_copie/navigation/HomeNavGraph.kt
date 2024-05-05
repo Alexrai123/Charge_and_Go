@@ -21,9 +21,15 @@ import com.example.licenta_copie.Authentication.ForgotPasswordScreen
 import com.example.licenta_copie.Authentication.LoginScreen
 import com.example.licenta_copie.Authentication.SignupScreen
 import com.example.licenta_copie.Database.AppDatabase
+import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
+import com.example.licenta_copie.Database.OfflineRepository.OfflineChargingStationRepository
 import com.example.licenta_copie.Database.OfflineRepository.OfflineReservationRepository
+import com.example.licenta_copie.Database.OfflineRepository.OfflineUserRepository
+import com.example.licenta_copie.ModelView.CarViewModel
+import com.example.licenta_copie.ModelView.ChargingStationViewModel
 import com.example.licenta_copie.ModelView.ReservationViewModel
 import com.example.licenta_copie.ModelView.SharedViewModel
+import com.example.licenta_copie.ModelView.UserViewModel
 import com.example.licenta_copie.otherScreens.Bookings
 import com.example.licenta_copie.otherScreens.MapScreen
 import com.example.licenta_copie.otherScreens.Profile
@@ -76,16 +82,32 @@ fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewMo
                 onReservation = {navController.navigate(AuthScreen.Reservations.route)})
         }
         composable(route = AuthScreen.Users.route){
-            Users(goBack = { navController.popBackStack() })
+            val userRepository = OfflineUserRepository(
+                userDao = AppDatabase.getDatabase(LocalContext.current).userDao()
+            )
+            val userViewModel = UserViewModel(userRepository)
+            Users(userViewModel, goBack = { navController.popBackStack() })
         }
         composable(route = AuthScreen.Cars.route){
-            Cars(goBack = { navController.popBackStack() })
+            val carRepository = OfflineCarRepository(
+                carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
+            )
+            val carViewModel = CarViewModel(carRepository)
+            Cars(carViewModel, goBack = { navController.popBackStack() })
         }
         composable(route = AuthScreen.ChargingStations.route){
-            ChargingStations(goBack = { navController.popBackStack() })
+            val chargingStationRepository = OfflineChargingStationRepository(
+                chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
+            )
+            val chargingStationViewModel = ChargingStationViewModel(chargingStationRepository)
+            ChargingStations(chargingStationViewModel, goBack = { navController.popBackStack() })
         }
         composable(route = AuthScreen.Reservations.route){
-            Reservations(goBack = { navController.popBackStack() })
+            val reservationRepository = OfflineReservationRepository(
+                reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
+            )
+            val reservationViewModel = ReservationViewModel(reservationRepository)
+            Reservations(reservationViewModel, goBack = { navController.popBackStack() })
         }
     }
 }
