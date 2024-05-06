@@ -4,12 +4,11 @@ import androidx.room.Entity
 import androidx.room.PrimaryKey
 @Entity(tableName = "ChargingStation")
 data class ChargingStation(
-    @PrimaryKey(autoGenerate = true)
-    val id: Int = 0,
-    val lat: Double,
-    val lng: Double,
-    val location: String,
-    val chargingPower_kW: Int,
-    val nrOfChargingPorts: Int,
-    val pricePerHour: Int
+    @PrimaryKey
+    var name: String = "",
+    var lat: Double = 0.0,
+    var lng: Double = 0.0,
+    var chargingPower_kW: Int = 0,
+    var nrOfChargingPorts: Int = 0,
+    var pricePerHour: Int = 0
 )
