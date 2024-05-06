@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,6 +47,8 @@ import com.example.licenta_copie.Database.OfflineRepository.OfflineReservationRe
 import com.example.licenta_copie.ModelView.ReservationViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 @Composable
@@ -84,7 +87,7 @@ fun ReservationCard(reservation: Reservation){
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
-                 showDialogDelete: MutableState<Boolean>, showDialogEdit: MutableState<Boolean>){
+                 showDialogDelete: MutableState<Boolean>, showDialogEdit: MutableState<Boolean> ){
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
     Scaffold(
         topBar = {
@@ -155,6 +158,121 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
         }
     }
     if(showDialogEdit.value){
+        var id by remember { mutableStateOf("") }
+        var nameOfChargingStation by remember { mutableStateOf("") }
+        var idOfUser by remember { mutableStateOf("") }
+        var date by remember { mutableStateOf("") }
+        var startChargeTime by remember { mutableStateOf("") }
+        var endChargeTime by remember { mutableStateOf("") }
+        val reservationRepository = OfflineReservationRepository(
+            reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
+        )
+        val reservationEdit by remember { mutableStateOf(Reservation()) }
+        LaunchedEffect(id) {
+            reservationEdit.nameOfChargingStation = ""
+            reservationEdit.idOfUser = 0
+            reservationEdit.date = ""
+            reservationEdit.StartChargeTime = ""
+            reservationEdit.EndChargeTime = ""
+            reservationEdit.totalCost = 0
+            if(id.isNotEmpty()){
+                delay(500)
+                val reservation = reservationRepository.getReservationById(id.toInt()).firstOrNull()
+                reservation?.let {
+                    reservationEdit.idReservation = it.idReservation
+                    reservationEdit.nameOfChargingStation = it.nameOfChargingStation
+                    reservationEdit.idOfUser = it.idOfUser
+                    reservationEdit.date = it.date
+                    reservationEdit.StartChargeTime = it.StartChargeTime
+                    reservationEdit.EndChargeTime = it.EndChargeTime
+                    reservationEdit.totalCost = 0
 
+                    nameOfChargingStation = it.nameOfChargingStation
+                    idOfUser = it.idOfUser.toString()
+                    date = it.date
+                    startChargeTime = it.StartChargeTime
+                    endChargeTime = it.EndChargeTime
+                }
+                delay(500)
+            }
+        }
+        Dialog(onDismissRequest = { showDialogEdit.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )) {
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .height(455.dp)
+                .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Column(modifier = Modifier.padding(5.dp)) {
+                    Text(
+                        text = "Edit Reservation",
+                    )
+                    TextField(
+                        value = id,
+                        onValueChange = { id = it },
+                        label = { Text("Id") }
+                    )
+                    TextField(
+                        value = nameOfChargingStation,
+                        onValueChange = { nameOfChargingStation = it },
+                        label = { Text("Name of Charging Station") }
+                    )
+                    TextField(
+                        value = idOfUser,
+                        onValueChange = { idOfUser = it },
+                        label = { Text("Id of User") }
+                    )
+                    TextField(
+                        value = date,
+                        onValueChange = { date = it },
+                        label = { Text("Date") }
+                    )
+                    TextField(
+                        value = startChargeTime,
+                        onValueChange = { startChargeTime = it },
+                        label = { Text("Start Charge Time") }
+                    )
+                    TextField(
+                        value = endChargeTime,
+                        onValueChange = { endChargeTime = it },
+                        label = { Text("End Charge Time") }
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Button(onClick = {
+                            reservationEdit.nameOfChargingStation = ""
+                            reservationEdit.idOfUser = 0
+                            reservationEdit.date = ""
+                            reservationEdit.StartChargeTime = ""
+                            reservationEdit.EndChargeTime = ""
+                            reservationEdit.totalCost = 0
+                            showDialogEdit.value = false
+                        }){
+                            Text("Cancel")
+                        }
+                        Button(modifier = Modifier.padding(start = 95.dp),
+                            onClick = {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    reservationEdit.nameOfChargingStation = nameOfChargingStation
+                                    reservationEdit.idOfUser = idOfUser.toInt()
+                                    reservationEdit.date = date
+                                    reservationEdit.StartChargeTime = startChargeTime
+                                    reservationEdit.EndChargeTime = endChargeTime
+                                    reservationEdit.totalCost = 0
+                                    reservationRepository.updateReservation(reservationEdit)
+                                    showDialogEdit.value = false
+                                }
+                            }
+                        ) {
+                            Text("Submit")
+                        }
+                    }
+                }
+            }
+        }
     }
 }

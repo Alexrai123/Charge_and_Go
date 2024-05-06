@@ -2,6 +2,7 @@ package com.example.licenta_copie.otherScreens
 
 import android.annotation.SuppressLint
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -160,22 +161,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         onValueChange = {endChargeTime = it},
                         label = { Text("End Time") }
                     )
-                    Row {
-                        Button(onClick = {
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    newReservation.nameOfChargingStation = nameChargingStation
-                                    newReservation.idOfUser = idUser.toInt()
-                                    newReservation.date = date
-                                    newReservation.StartChargeTime = startChargeTime
-                                    newReservation.EndChargeTime = endChargeTime
-                                    newReservation.totalCost = 100
-                                    reservationRepository.insertReservation(newReservation)
-                                    showDialog.value = false
-                                }
-                            }
-                        ) {
-                            Text("Submit")
-                        }
+                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
                         Button(onClick = {
                                 nameChargingStation = ""
                                 startChargeTime = ""
@@ -185,6 +171,21 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                             }
                         ) {
                             Text("Cancel")
+                        }
+                        Button(onClick = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                newReservation.nameOfChargingStation = nameChargingStation
+                                newReservation.idOfUser = idUser.toInt()
+                                newReservation.date = date
+                                newReservation.StartChargeTime = startChargeTime
+                                newReservation.EndChargeTime = endChargeTime
+                                newReservation.totalCost = 100
+                                reservationRepository.insertReservation(newReservation)
+                                showDialog.value = false
+                            }
+                        }
+                        ) {
+                            Text("Submit")
                         }
                     }
                 }
