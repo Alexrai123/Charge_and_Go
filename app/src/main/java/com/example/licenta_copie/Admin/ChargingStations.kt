@@ -62,12 +62,11 @@ fun ReservationCard(chargingStation: ChargingStation){
         border = BorderStroke(1.dp, Color.Black)
     ){
         Column(modifier = Modifier.padding(5.dp)){
-            //id
-            Text(text = "ID: "+chargingStation.id.toString())
+            //location
+            Text(text = "Address: "+chargingStation.name)
             Spacer(modifier = Modifier.height(5.dp))
             //lat, lng
             Text(text = "Location: "+chargingStation.lat.toString()+", "+chargingStation.lng.toString())
-            Text(text = "Address: "+chargingStation.location)
             Spacer(modifier = Modifier.height(5.dp))
             //charging power
             Text(text = "Charging Power (kW): "+chargingStation.chargingPower_kW.toString())
@@ -88,7 +87,7 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
         topBar = {
             TopAppBar(title = { Text(text = "Charging Station") },
                 actions = {
-                    IconButton(onClick = { showDialogEdit.value = true }) {
+                    IconButton(onClick = { showDialogAdd.value = true }) {
                         Icon(imageVector = Icons.Default.Add, contentDescription = "Add charging station")
                     }
                     IconButton(onClick = { showDialogEdit.value = true }) {
@@ -109,7 +108,9 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
                 .padding(contentPadding)
                 .fillMaxSize()) {
                 //afisezi tabela ChargingStation
-                LazyColumn(modifier = Modifier.padding(8.dp).fillMaxSize()){
+                LazyColumn(modifier = Modifier
+                    .padding(8.dp)
+                    .fillMaxSize()){
                     items(chargingStations.size){ index ->
                         ReservationCard(chargingStation = chargingStations[index])
                     }
@@ -118,7 +119,7 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
         }
     )
     if(showDialogDelete.value){
-        var idDelete by remember { mutableStateOf("") }
+        var nameDelete by remember { mutableStateOf("") }
         val chargingStationRepository = OfflineChargingStationRepository(
             chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
         )
@@ -131,20 +132,20 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
             Column(modifier = Modifier.fillMaxSize(),
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center) {
-                TextField(value = idDelete,
-                    onValueChange = { idDelete = it },
-                    label = { Text(text = "ID") }
+                TextField(value = nameDelete,
+                    onValueChange = { nameDelete = it },
+                    label = { Text(text = "Name") }
                 )
                 Row(horizontalArrangement = Arrangement.SpaceEvenly){
                     Button(onClick = {
-                        idDelete = ""
+                        nameDelete = ""
                         showDialogDelete.value = false}) {
                         Text("Cancel")
                     }
                     Button(
                         onClick = {
                             CoroutineScope(Dispatchers.Main).launch {
-                                chargingStationRepository.deleteChargingStationById(idDelete.toInt())
+                                chargingStationRepository.deleteChargingStationByName(nameDelete)
                                 showDialogDelete.value = false
                             }
                         }, colors = ButtonDefaults.buttonColors(Color.Red)){
@@ -155,7 +156,95 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
         }
     }
     if(showDialogAdd.value){
-
+        var lat by remember { mutableStateOf("") }
+        var lng by remember { mutableStateOf("") }
+        var name by remember { mutableStateOf("") }
+        var chargingPower_kW by remember { mutableStateOf("") }
+        var nrOfChargingPorts by remember { mutableStateOf("") }
+        var pricePerHour by remember { mutableStateOf("") }
+        val newChargingStation by remember { mutableStateOf(ChargingStation()) }
+        val chargingStationRepository = OfflineChargingStationRepository(
+            chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
+        )
+        Dialog(onDismissRequest = { showDialogAdd.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )) {
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .height(455.dp)
+                .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Column(modifier = Modifier.padding(5.dp)) {
+                    Text(
+                        text = "Add Charging Station",
+                    )
+                    TextField(
+                        value = name,
+                        onValueChange = {name = it},
+                        label = { Text("Name") }
+                    )
+                    TextField(
+                        value = lat,
+                        onValueChange = {lat = it},
+                        label = { Text("Latitude") }
+                    )
+                    TextField(
+                        value = lng,
+                        onValueChange = {lng = it},
+                        label = { Text("Longitude") }
+                    )
+                    TextField(
+                        value = chargingPower_kW,
+                        onValueChange = {chargingPower_kW = it},
+                        label = { Text("Charging Power (kW)") }
+                    )
+                    TextField(
+                        value = nrOfChargingPorts,
+                        onValueChange = {nrOfChargingPorts = it},
+                        label = { Text("Number Of Charging Ports") }
+                    )
+                    TextField(
+                        value = pricePerHour,
+                        onValueChange = {pricePerHour = it},
+                        label = { Text("Price Per Hour") }
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Button(onClick = {
+                            lat = ""
+                            lng = ""
+                            name = ""
+                            chargingPower_kW = ""
+                            nrOfChargingPorts = ""
+                            pricePerHour = ""
+                            showDialogAdd.value = false
+                        }
+                        ) {
+                            Text("Cancel")
+                        }
+                        Button(modifier = Modifier.padding(start = 95.dp),
+                            onClick = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                newChargingStation.lat = lat.toDouble()
+                                newChargingStation.lng = lng.toDouble()
+                                newChargingStation.name = name
+                                newChargingStation.chargingPower_kW = chargingPower_kW.toInt()
+                                newChargingStation.nrOfChargingPorts = nrOfChargingPorts.toInt()
+                                newChargingStation.pricePerHour = pricePerHour.toInt()
+                                chargingStationRepository.insertChargingStation(newChargingStation)
+                                showDialogAdd.value = false
+                            }
+                        }
+                        ) {
+                            Text("Submit")
+                        }
+                    }
+                }
+            }
+        }
     }
     if(showDialogEdit.value) {
 

@@ -42,7 +42,11 @@ fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewMo
             Profile(showDialog, sharedViewModel, onLogout = { navController.navigate(AuthScreen.Login.route) })
         }
         composable(route = BottomBarScreen.Map.route){
-            MapScreen()
+            val chargingStationRepository = OfflineChargingStationRepository(
+                chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
+            )
+            val chargingStationViewModel = ChargingStationViewModel(chargingStationRepository)
+            MapScreen(chargingStationViewModel)
         }
         composable(route = BottomBarScreen.Bookings.route){
             val reservationRepository = OfflineReservationRepository(

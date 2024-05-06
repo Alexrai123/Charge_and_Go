@@ -84,7 +84,7 @@ fun ReservationCard(reservation: Reservation){
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
 fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel) {
-    var idChargingStation by remember { mutableStateOf("") }
+    var nameChargingStation by remember { mutableStateOf("") }
     var idUser by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
     var startChargeTime by remember { mutableStateOf("") }
@@ -137,11 +137,11 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                     )
                     Spacer(modifier = Modifier.height(16.dp))
                     TextField(//id of charging station
-                        value = idChargingStation,
+                        value = nameChargingStation,
                         onValueChange = {
-                            idChargingStation = it
+                            nameChargingStation = it
                         },
-                        label = { Text("ID of Charging Station") }
+                        label = { Text("Name of Charging Station") }
                     )
                         //data
                     TextField(
@@ -163,7 +163,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                     Row {
                         Button(onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    newReservation.idOfChargingStation = idChargingStation.toInt()
+                                    newReservation.nameOfChargingStation = nameChargingStation
                                     newReservation.idOfUser = idUser.toInt()
                                     newReservation.date = date
                                     newReservation.StartChargeTime = startChargeTime
@@ -177,11 +177,10 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                             Text("Submit")
                         }
                         Button(onClick = {
-                                newReservation.idOfChargingStation = 0
-                                newReservation.StartChargeTime = ""
-                                newReservation.EndChargeTime = ""
-                                newReservation.date = ""
-                                newReservation.totalCost = 0
+                                nameChargingStation = ""
+                                startChargeTime = ""
+                                endChargeTime = ""
+                                date = ""
                                 showDialog.value = false
                             }
                         ) {

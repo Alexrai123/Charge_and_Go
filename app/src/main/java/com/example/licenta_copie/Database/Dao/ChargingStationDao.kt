@@ -13,10 +13,12 @@ import kotlinx.coroutines.flow.Flow
 interface ChargingStationDao {
     @Query("SELECT * from ChargingStation")
     fun getAllChargingStations(): Flow<List<ChargingStation>>
-    @Query("SELECT * from ChargingStation WHERE id = :id")
-    fun getChargingStationById(id: Int): Flow<ChargingStation>
-    @Query("DELETE FROM ChargingStation WHERE id = :id")
-    suspend fun deleteChargingStationById(id: Int)
+    @Query("SELECT * from ChargingStation WHERE name = :name")
+    fun getChargingStationById(name: String): Flow<ChargingStation>
+    @Query("SELECT * from ChargingStation WHERE name = :name")
+    fun getChargingStationByName(name: String): Flow<ChargingStation>
+    @Query("DELETE FROM ChargingStation WHERE name = :name")
+    suspend fun deleteChargingStationByName(name: String)
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(chargingStation: ChargingStation)
     @Update
