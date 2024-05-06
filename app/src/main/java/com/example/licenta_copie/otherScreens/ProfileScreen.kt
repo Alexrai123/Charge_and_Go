@@ -1,21 +1,15 @@
 package com.example.licenta_copie.otherScreens
 
 import android.annotation.SuppressLint
-import android.net.Uri
 import android.widget.Toast
-import androidx.activity.compose.rememberLauncherForActivityResult
-import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
@@ -33,21 +27,16 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -59,7 +48,6 @@ import com.example.licenta_copie.Database.Entity.Car
 import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
 import com.example.licenta_copie.Database.OfflineRepository.OfflineUserRepository
 import com.example.licenta_copie.ModelView.SharedViewModel
-import com.example.licenta_copie.R
 import com.example.licenta_copie.ui.theme.focusedTextFieldText
 import com.example.licenta_copie.ui.theme.textFieldContainer
 import com.example.licenta_copie.ui.theme.unfocusedTextFieldText
@@ -71,17 +59,16 @@ import kotlinx.coroutines.launch
 
 fun convertStringToStars(input: String): String {
     val convertedString = StringBuilder()
-
     for (i in input.indices) {
         convertedString.append("*")
     }
-
     return convertedString.toString()
 }
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel, onLogout: () -> Unit) {
+fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedViewModel, onLogout: () -> Unit,
+            showDialogEditCar: MutableState<Boolean>) {
     //user
     var id by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -133,14 +120,12 @@ fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel,
             }
         }
     }
-    val scrollBehavior = TopAppBarDefaults.pinnedScrollBehavior()
     Scaffold(
-        modifier = Modifier.nestedScroll(scrollBehavior.nestedScrollConnection),
         topBar = {
           TopAppBar(title = { Text(text = "Profile") },
               actions = {
-                  IconButton(onClick = { /*TODO*/ }) {
-                      Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit profile")
+                  IconButton(onClick = { showDialogEditCar.value = true }) {
+                      Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Car")
                   }
                   IconButton(onClick = { onLogout() }) {
                       Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout")
@@ -150,13 +135,12 @@ fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel,
         floatingActionButton = {
             FloatingActionButton(
                 modifier = Modifier.padding(bottom = 75.dp),
-                onClick = { showDialog.value = true },
+                onClick = { showDialogAddCar.value = true },
                 content = { Icon(Icons.Default.AddCircle, contentDescription = "Add Car") }
             )
         },
         content = {contentPadding ->
             Column(modifier = Modifier.padding(contentPadding)) {
-                //ProfileImage()
                 Text(text = "User Information", modifier = Modifier.fillMaxWidth(),textAlign = TextAlign.Center,
                     fontWeight = FontWeight.ExtraBold, fontSize = 25.sp)
                 Row(
@@ -343,9 +327,9 @@ fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel,
             }
         }
     )
-    if(showDialog.value) {
+    if(showDialogAddCar.value) {
         newCar.ownerId = id.toInt()
-        Dialog(onDismissRequest = { showDialog.value = false },
+        Dialog(onDismissRequest = { showDialogAddCar.value = false },
             properties = DialogProperties(
                 dismissOnClickOutside = false,
                 dismissOnBackPress = false
@@ -379,28 +363,28 @@ fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel,
                         onValueChange = { batteryCapacity = it },
                         label = { Text("Battery Capacity") }
                     )
-                    Row (modifier = Modifier.fillMaxWidth()){
+                    Row (horizontalArrangement = Arrangement.SpaceEvenly){
                         Button(onClick = {
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    newCar.model = model
-                                    newCar.licensePlate = licensePlate
-                                    newCar.batteryCapacity = batteryCapacity.toInt()
-                                    carRepository.insertCar(newCar)
-                                    showDialog.value = false
-                                }
-                            }
-                        ) {
-                            Text("Submit")
-                        }
-                        Button(modifier = Modifier.fillMaxWidth(),
-                            onClick = {
                                 model = ""
                                 licensePlate = ""
                                 batteryCapacity = ""
-                                showDialog.value = false
+                                showDialogAddCar.value = false
                             }
                         ) {
                             Text("Cancel")
+                        }
+                        Button(modifier = Modifier.padding(start = 65.dp),
+                            onClick = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                newCar.model = model
+                                newCar.licensePlate = licensePlate
+                                newCar.batteryCapacity = batteryCapacity.toInt()
+                                carRepository.insertCar(newCar)
+                                showDialogAddCar.value = false
+                            }
+                        }
+                        ) {
+                            Text("Submit")
                         }
                     }
                 }
@@ -409,30 +393,204 @@ fun Profile(showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel,
     }
     sharedViewModel.car_id.value = carId
     sharedViewModel.user_id.value = id
-}
-@Composable
-fun ProfileImage(){
-    val imageUrl = rememberSaveable { mutableStateOf("") }
-    rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.GetContent()
-    ){ uri: Uri? -> uri?.let { imageUrl.value = it.toString() }
-    }
-    Column(
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ){
-        Card(shape = CircleShape, modifier = Modifier
-            .padding(8.dp)
-            .size(100.dp)){
-            Image(
-                painter = painterResource(id = R.drawable.ic_user),
-                contentDescription = null,
-                modifier = Modifier
-                    .wrapContentSize(),
-                contentScale = ContentScale.Crop
-            )
+//    if(showDialogEditProfile.value){
+//        var idUser by remember { mutableStateOf("") }
+//        var emailUser by remember { mutableStateOf("") }
+//        var phoneNumberUser by remember { mutableStateOf("") }
+//        var passwordUser by remember { mutableStateOf("") }
+//        val userRepositoryUser = OfflineUserRepository(
+//            userDao = AppDatabase.getDatabase(LocalContext.current).userDao()
+//        )
+//        val userEdit by remember { mutableStateOf(User()) }
+//        idUser = sharedViewModel.user_id.value.toString()
+//        LaunchedEffect(idUser) {
+//            userEdit.email = ""
+//            userEdit.phoneNumber = ""
+//            userEdit.password = ""
+//            if(idUser.isNotEmpty()){
+//                delay(500)
+//                val user = userRepositoryUser.getUserById(idUser.toInt()).firstOrNull()
+//                user?.let {
+//                    user.id = it.id
+//                    user.email = it.email
+//                    user.phoneNumber = it.phoneNumber
+//                    user.password = it.password
+//
+//                    idUser = it.id.toString()
+//                    emailUser = it.email
+//                    phoneNumberUser = it.phoneNumber
+//                    passwordUser = it.password
+//                }
+//                delay(500)
+//            }
+//        }
+//        Dialog(onDismissRequest = { showDialogEditCar.value = false },
+//            properties = DialogProperties(
+//                dismissOnClickOutside = false,
+//                dismissOnBackPress = false
+//            )) {
+//            Card(modifier = Modifier
+//                .fillMaxWidth()
+//                .height(455.dp)
+//                .padding(16.dp),
+//                shape = RoundedCornerShape(16.dp),
+//            ) {
+//                Column(modifier = Modifier.padding(5.dp)) {
+//                    Text(
+//                        text = "Edit Profile",
+//                    )
+//                    TextField(
+//                        value = idUser,
+//                        onValueChange = { /*idUser = it*/ },
+//                        label = { Text("Id") }
+//                    )
+//                    TextField(
+//                        value = emailUser,
+//                        onValueChange = { emailUser = it },
+//                        label = { Text("Email") }
+//                    )
+//                    TextField(
+//                        value = phoneNumberUser,
+//                        onValueChange = { phoneNumberUser = it },
+//                        label = { Text("Phone Number") }
+//                    )
+//                    TextField(
+//                        value = passwordUser,
+//                        onValueChange = { passwordUser = it },
+//                        label = { Text("Password") }
+//                    )
+//                    Spacer(modifier = Modifier.height(5.dp))
+//                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+//                        Button(onClick = {
+//                            userEdit.email = ""
+//                            userEdit.phoneNumber = ""
+//                            userEdit.password = ""
+//                            showDialogEditProfile.value = false
+//                        }){
+//                            Text("Cancel")
+//                        }
+//                        Button(modifier = Modifier.padding(start = 95.dp),
+//                            onClick = {
+//                                CoroutineScope(Dispatchers.Main).launch {
+//                                    userEdit.email = emailUser
+//                                    userEdit.phoneNumber = phoneNumberUser
+//                                    userEdit.password = passwordUser
+//                                    userRepositoryUser.updateUser(userEdit)
+//                                    showDialogEditProfile.value = false
+//                                }
+//                            }
+//                        ) {
+//                            Text("Submit")
+//                        }
+//                    }
+//                }
+//            }
+//        }
+//    }
+    if(showDialogEditCar.value){
+        var idCar by remember { mutableStateOf("") }
+        var ownerIdCar by remember { mutableStateOf("") }
+        var modelCar by remember { mutableStateOf("") }
+        var licensePlateCar by remember { mutableStateOf("") }
+        var batteryCapacityCar by remember { mutableStateOf("") }
+        val carRepositoryCar = OfflineCarRepository(
+            carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
+        )
+        val carEdit by remember { mutableStateOf(Car()) }
+        idCar = sharedViewModel.car_id.value.toString()
+        ownerIdCar = sharedViewModel.user_id.value.toString()
+        LaunchedEffect(idCar, ownerIdCar) {
+            //carEdit.ownerId = 0
+            carEdit.model = ""
+            carEdit.licensePlate = ""
+            carEdit.batteryCapacity = 0
+            if(idCar.isNotEmpty()){
+                delay(500)
+                val car = carRepositoryCar.getCarById(idCar.toInt()).firstOrNull()
+                car?.let {
+                    carEdit.id = it.id
+                    carEdit.ownerId = it.ownerId
+                    carEdit.model = it.model
+                    carEdit.licensePlate = it.licensePlate
+                    carEdit.batteryCapacity = it.batteryCapacity
+
+                    idCar = it.id.toString()
+                    ownerIdCar = it.ownerId.toString()
+                    modelCar = it.model
+                    licensePlateCar = it.licensePlate
+                    batteryCapacityCar = it.batteryCapacity.toString()
+                }
+                delay(500)
+            }
+        }
+        Dialog(onDismissRequest = { showDialogEditCar.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )) {
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .height(455.dp)
+                .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Column(modifier = Modifier.padding(5.dp)) {
+                    Text(
+                        text = "Edit Car",
+                    )
+                    TextField(
+                        value = idCar,
+                        onValueChange = { /*id = it*/ },
+                        label = { Text("Id") }
+                    )
+                    TextField(
+                        value = ownerIdCar,
+                        onValueChange = { /*ownerId = it*/ },
+                        label = { Text("Owner Id") }
+                    )
+                    TextField(
+                        value = modelCar,
+                        onValueChange = { modelCar = it },
+                        label = { Text("Model") }
+                    )
+                    TextField(
+                        value = licensePlateCar,
+                        onValueChange = { licensePlateCar = it },
+                        label = { Text("License Plate") }
+                    )
+                    TextField(
+                        value = batteryCapacityCar,
+                        onValueChange = { batteryCapacityCar = it },
+                        label = { Text("Battery Capacity") }
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Button(onClick = {
+                            carEdit.ownerId = 0
+                            carEdit.model = ""
+                            carEdit.licensePlate = ""
+                            carEdit.batteryCapacity = 0
+                            showDialogEditCar.value = false
+                        }){
+                            Text("Cancel")
+                        }
+                        Button(modifier = Modifier.padding(start = 95.dp),
+                            onClick = {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    carEdit.ownerId = ownerIdCar.toInt()
+                                    carEdit.model = modelCar
+                                    carEdit.licensePlate = licensePlateCar
+                                    carEdit.batteryCapacity = batteryCapacityCar.toInt()
+                                    carRepository.updateCar(carEdit)
+                                    showDialogEditCar.value = false
+                                }
+                            }
+                        ) {
+                            Text("Submit")
+                        }
+                    }
+                }
+            }
         }
     }
 }

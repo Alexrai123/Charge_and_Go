@@ -27,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,6 +47,8 @@ import com.example.licenta_copie.Database.OfflineRepository.OfflineUserRepositor
 import com.example.licenta_copie.ModelView.UserViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 @Composable
@@ -148,6 +151,89 @@ fun Users(userViewModel: UserViewModel, goBack:() -> Unit,
         }
     }
     if(showDialogEdit.value){
+        var id by remember { mutableStateOf("") }
+        var email by remember { mutableStateOf("") }
+        var phoneNumber by remember { mutableStateOf("") }
+        var password by remember { mutableStateOf("") }
+        val userRepository = OfflineUserRepository(
+            userDao = AppDatabase.getDatabase(LocalContext.current).userDao()
+        )
+        val userEdit by remember { mutableStateOf(User()) }
+        LaunchedEffect(id) {
+            userEdit.email = ""
+            userEdit.phoneNumber = ""
+            userEdit.password = ""
+            if(id.isNotEmpty()){
+                delay(500)
+                val user = userRepository.getUserById(id.toInt()).firstOrNull()
+                user?.let {
+                    userEdit.id = it.id
+                    userEdit.email = it.email
+                    userEdit.phoneNumber = it.phoneNumber
+                    userEdit.password = it.password
 
+                    email = it.email
+                    phoneNumber = it.phoneNumber
+                    password = it.password
+                }
+                delay(500)
+            }
+        }
+        Dialog(onDismissRequest = { showDialogEdit.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )) {
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .height(455.dp)
+                .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Column(modifier = Modifier.padding(5.dp)) {
+                    Text(
+                        text = "Edit User",
+                    )
+                    TextField(
+                        value = id,
+                        onValueChange = { id = it },
+                        label = { Text("Id") }
+                    )
+                    TextField(
+                        value = email,
+                        onValueChange = { email = it },
+                        label = { Text("Email") }
+                    )
+                    TextField(
+                        value = phoneNumber,
+                        onValueChange = { phoneNumber = it },
+                        label = { Text("Phone Number") }
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Button(onClick = {
+                            userEdit.email = ""
+                            userEdit.phoneNumber = ""
+                            showDialogEdit.value = false
+                        }){
+                            Text("Cancel")
+                        }
+                        Button(modifier = Modifier.padding(start = 95.dp),
+                            onClick = {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    userEdit.email = email
+                                    userEdit.phoneNumber = phoneNumber
+                                    userEdit.password = password
+                                    userRepository.updateUser(userEdit)
+                                    showDialogEdit.value = false
+                                }
+                            }
+                        ) {
+                            Text("Submit")
+                        }
+                    }
+                }
+            }
+        }
     }
 }

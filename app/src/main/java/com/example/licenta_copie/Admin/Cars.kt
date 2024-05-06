@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -26,6 +27,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -45,6 +47,8 @@ import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
 import com.example.licenta_copie.ModelView.CarViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 
 @Composable
@@ -83,6 +87,9 @@ fun Cars(carViewModel: CarViewModel, goBack:() -> Unit,
         topBar = {
             TopAppBar(title = { Text(text = "Cars") },
                 actions = {
+                    IconButton(onClick = { showDialogEdit.value = true }) {
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit user")
+                    }
                     IconButton(onClick = { showDialogDelete.value = true }) {
                         Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete car")
                     }
@@ -139,6 +146,110 @@ fun Cars(carViewModel: CarViewModel, goBack:() -> Unit,
                             }
                         }, colors = ButtonDefaults.buttonColors(Color.Red)){
                         Text(text = "Delete")
+                    }
+                }
+            }
+        }
+    }
+    if(showDialogEdit.value){
+        var id by remember { mutableStateOf("") }
+        var ownerId by remember { mutableStateOf("") }
+        var model by remember { mutableStateOf("") }
+        var licensePlate by remember { mutableStateOf("") }
+        var batteryCapacity by remember { mutableStateOf("") }
+        val carRepository = OfflineCarRepository(
+            carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
+        )
+        val carEdit by remember { mutableStateOf(Car()) }
+        LaunchedEffect(id) {
+            carEdit.ownerId = 0
+            carEdit.model = ""
+            carEdit.licensePlate = ""
+            carEdit.batteryCapacity = 0
+            if(id.isNotEmpty()){
+                delay(500)
+                val car = carRepository.getCarById(id.toInt()).firstOrNull()
+                car?.let {
+                    carEdit.id = it.id
+                    carEdit.ownerId = it.ownerId
+                    carEdit.model = it.model
+                    carEdit.licensePlate = it.licensePlate
+                    carEdit.batteryCapacity = it.batteryCapacity
+
+                    id = it.id.toString()
+                    ownerId = it.ownerId.toString()
+                    model = it.model
+                    licensePlate = it.licensePlate
+                    batteryCapacity = it.batteryCapacity.toString()
+                }
+                delay(500)
+            }
+        }
+        Dialog(onDismissRequest = { showDialogEdit.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )) {
+            Card(modifier = Modifier
+                .fillMaxWidth()
+                .height(455.dp)
+                .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Column(modifier = Modifier.padding(5.dp)) {
+                    Text(
+                        text = "Edit User",
+                    )
+                    TextField(
+                        value = id,
+                        onValueChange = { id = it },
+                        label = { Text("Id") }
+                    )
+                    TextField(
+                        value = ownerId,
+                        onValueChange = { ownerId = it },
+                        label = { Text("Owner Id") }
+                    )
+                    TextField(
+                        value = model,
+                        onValueChange = { model = it },
+                        label = { Text("Model") }
+                    )
+                    TextField(
+                        value = licensePlate,
+                        onValueChange = { licensePlate = it },
+                        label = { Text("License Plate") }
+                    )
+                    TextField(
+                        value = batteryCapacity,
+                        onValueChange = { batteryCapacity = it },
+                        label = { Text("Battery Capacity") }
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Button(onClick = {
+                            carEdit.ownerId = 0
+                            carEdit.model = ""
+                            carEdit.licensePlate = ""
+                            carEdit.batteryCapacity = 0
+                            showDialogEdit.value = false
+                        }){
+                            Text("Cancel")
+                        }
+                        Button(modifier = Modifier.padding(start = 95.dp),
+                            onClick = {
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    carEdit.ownerId = ownerId.toInt()
+                                    carEdit.model = model
+                                    carEdit.licensePlate = licensePlate
+                                    carEdit.batteryCapacity = batteryCapacity.toInt()
+                                    carRepository.updateCar(carEdit)
+                                    showDialogEdit.value = false
+                                }
+                            }
+                        ) {
+                            Text("Submit")
+                        }
                     }
                 }
             }

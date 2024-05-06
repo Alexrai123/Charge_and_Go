@@ -38,8 +38,10 @@ import com.example.licenta_copie.otherScreens.Profile
 fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewModel) {
     NavHost(navController = navController, route = Graph.HOME, startDestination = BottomBarScreen.Profile.route){
         composable(route = BottomBarScreen.Profile.route){
-            val showDialog = remember { mutableStateOf(false) }
-            Profile(showDialog, sharedViewModel, onLogout = { navController.navigate(AuthScreen.Login.route) })
+            val showDialogAddCar = remember { mutableStateOf(false) }
+            val showDialogEditProfile = remember { mutableStateOf(false) }
+            val showDialogEditCar = remember { mutableStateOf(false) }
+            Profile(showDialogAddCar, sharedViewModel, onLogout = { navController.navigate(AuthScreen.Login.route) }, showDialogEditProfile)
         }
         composable(route = BottomBarScreen.Map.route){
             val chargingStationRepository = OfflineChargingStationRepository(
