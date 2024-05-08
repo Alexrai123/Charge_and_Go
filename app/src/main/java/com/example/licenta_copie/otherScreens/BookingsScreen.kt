@@ -1,6 +1,7 @@
 package com.example.licenta_copie.otherScreens
 
 import android.annotation.SuppressLint
+import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -28,6 +29,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableDoubleStateOf
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -46,6 +49,7 @@ import com.example.licenta_copie.ModelView.ReservationViewModel
 import com.example.licenta_copie.ModelView.SharedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -106,18 +110,23 @@ fun calculateTimeDifference(startTime: String, endTime: String): Long {
     return ChronoUnit.MINUTES.between(start, end)
 }
 fun calculateChargingTime(batteryCapacity: Int, chargingPower: Int): Int {
-    return (batteryCapacity / chargingPower) * 60  // Assuming linear charging, result in minutes
+    val chargeTimeMinutes = (batteryCapacity * 60.0) / chargingPower
+    return chargeTimeMinutes.toInt()
 }
+
 fun calculateTotalCost(timeReserved: Long, timeToCharge: Int, pricePerHour: Int): Double {
     val hoursReserved = timeReserved / 60.0
     val hoursToCharge = timeToCharge / 60.0
     val billedHours = min(hoursReserved, hoursToCharge)
-    return billedHours * pricePerHour
+    val totalCost = billedHours * pricePerHour
+    return totalCost
+}
+fun Double.format(digits: Int): String {
+    return String.format("%.${digits}f", this)
 }
 
-
 @Composable
-fun ReservationCard(reservation: Reservation){
+fun ReservationCard(reservation: Reservation, chargingTime: Int, totalCost: Double){
     Card(modifier = Modifier
         .padding(8.dp)
         .fillMaxWidth(),
@@ -139,6 +148,10 @@ fun ReservationCard(reservation: Reservation){
             Spacer(modifier = Modifier.height(5.dp))
             //pret
             Text(text = "Price per hour: "+reservation.totalCost.toString()+" lei")
+            //cat se incarca 0-100%
+            //Text(text = "Charging time: $chargingTime minutes from 0% to 100%")
+            //suma
+            //Text(text = "Total cost: ${totalCost.format(2)} lei")
         }
     }
 }
@@ -153,6 +166,8 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
     val newReservation by remember { mutableStateOf(Reservation()) }
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
     val notification = remember{ mutableStateOf("") }
+    var chargingTime by remember { mutableIntStateOf(0) }
+    var totalCost by remember { mutableDoubleStateOf(0.0)}
     if(notification.value.isNotEmpty()){
         Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
         notification.value = " "
@@ -161,7 +176,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(
-                modifier = Modifier.padding(bottom = 75.dp),
+                modifier = Modifier.padding(bottom = 80.dp),
                 onClick = { showDialog.value = true },
                 content = { Icon(Icons.Default.Add, contentDescription = "Add Reservation") }
             )
@@ -170,12 +185,12 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(8.dp)
+                    .padding(bottom = 70.dp)
             ) {
                 items(reservations.filter { reservations ->
                     reservations.idOfUser.toString() == sharedViewModel.user_id.value
                 }) { reservation ->
-                    ReservationCard(reservation = reservation)
+                    ReservationCard(reservation = reservation, chargingTime = chargingTime, totalCost = totalCost)
                 }
             }
         }
@@ -254,13 +269,25 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                         val validationResult = submitReservation(date, startChargeTime, endChargeTime)
                                         if (validationResult == "Valid") {
                                             if (overlapCount == 0) {
+                                                delay(500)
                                                 val timeDifference = calculateTimeDifference(startChargeTime, endChargeTime)
                                                 val car = sharedViewModel.user_id.value?.let { id ->
                                                     carRepository.getCarByOwnerId(id.toInt()).firstOrNull()
                                                 }
+                                                delay(500)
                                                 if (car != null) {
-                                                    val chargingTime = calculateChargingTime(car.batteryCapacity, chargingStation.chargingPower_kW)
-                                                    val totalCost = calculateTotalCost(timeDifference, chargingTime, chargingStation.pricePerHour)
+                                                    chargingTime = calculateChargingTime(car.batteryCapacity, chargingStation.chargingPower_kW)
+
+                                                    Log.d("baterie", car.batteryCapacity.toString())
+                                                    Log.d("Charging Power", chargingStation.chargingPower_kW.toString())
+                                                    delay(500)
+                                                    totalCost = calculateTotalCost(timeDifference, chargingTime, chargingStation.pricePerHour)
+
+                                                    Log.d("timeDifference", timeDifference.toString())
+                                                    Log.d("chargingTime", chargingTime.toString())
+                                                    Log.d("pricePerHour", chargingStation.pricePerHour.toString())
+                                                    Log.d("totalCost", totalCost.toString())
+
                                                     newReservation.nameOfChargingStation = nameChargingStation
                                                     newReservation.idOfUser = idUser.toInt()
                                                     newReservation.date = date
