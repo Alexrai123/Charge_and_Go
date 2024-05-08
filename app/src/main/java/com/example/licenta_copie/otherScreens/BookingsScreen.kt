@@ -1,6 +1,7 @@
 package com.example.licenta_copie.otherScreens
 
 import android.annotation.SuppressLint
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -47,24 +48,74 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import java.time.LocalDate
 import java.time.LocalTime
+import java.time.format.DateTimeFormatter
+import java.time.format.DateTimeParseException
 import java.time.temporal.ChronoUnit
+import kotlin.math.min
 
-fun calculateChargingTime(
-    batteryCapacity: Int, // Battery capacity in kWh
-    initialSOC: Int = 0, // Initial state of charge in percentage
-    desiredSOC: Int = 100, // Desired state of charge in percentage
-    chargingPower: Int // Charging power in kW
-): Int {
-    val chargingTimeMinutes = (batteryCapacity * (desiredSOC - initialSOC) / chargingPower) * 60
-    return chargingTimeMinutes
+//**************************VALIDARI DATE**********************
+fun isValidTime(time: String): Boolean {
+    return try {
+        LocalTime.parse(time, DateTimeFormatter.ofPattern("HH:mm"))
+        true
+    } catch (e: DateTimeParseException) {
+        false
+    }
 }
+fun isValidDate(date: String): Boolean {
+    return try {
+        val parsedDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"))
+        val day = parsedDate.dayOfMonth
+        val month = parsedDate.monthValue
+        val year = parsedDate.year
+        day in 1..31 && month in 1..12 && year >= 1900 && year <= LocalDate.now().plusYears(100).year
+    } catch (e: DateTimeParseException) {
+        false
+    }
+}
+
+fun isValidTimeInterval(startTime: String, endTime: String): Boolean {
+    return try {
+        val start = LocalTime.parse(startTime, DateTimeFormatter.ofPattern("HH:mm"))
+        val end = LocalTime.parse(endTime, DateTimeFormatter.ofPattern("HH:mm"))
+        !start.isAfter(end) && !start.equals(end)
+    } catch (e: DateTimeParseException) {
+        false
+    }
+}
+
+fun submitReservation(date: String, startTime: String, endTime: String): String {
+    if (!isValidDate(date)) {
+        return "Invalid date format. Please use 'dd-MM-yyyy'."
+    }
+    if (!isValidTime(startTime) || !isValidTime(endTime)) {
+        return "Invalid time format. Please use 'HH:mm'."
+    }
+    if (!isValidTimeInterval(startTime, endTime)) {
+        return "End time must be after start time."
+    }
+    return "Valid"
+}
+//*************************CALCULAT TIMP SI SUMA INCARCARE************************
 fun calculateTimeDifference(startTime: String, endTime: String): Long {
-    val start = LocalTime.parse(startTime)
-    val end = LocalTime.parse(endTime)
-    val difference = ChronoUnit.MINUTES.between(start, end)
-    return difference
+    val start = LocalTime.parse(startTime, DateTimeFormatter.ofPattern("HH:mm"))
+    val end = LocalTime.parse(endTime, DateTimeFormatter.ofPattern("HH:mm"))
+    return ChronoUnit.MINUTES.between(start, end)
 }
+fun calculateChargingTime(batteryCapacity: Int, chargingPower: Int): Int {
+    return (batteryCapacity / chargingPower) * 60  // Assuming linear charging, result in minutes
+}
+fun calculateTotalCost(timeReserved: Long, timeToCharge: Int, pricePerHour: Int): Double {
+    val hoursReserved = timeReserved / 60.0
+    val hoursToCharge = timeToCharge / 60.0
+    val billedHours = min(hoursReserved, hoursToCharge)
+    return billedHours * pricePerHour
+}
+
+
 @Composable
 fun ReservationCard(reservation: Reservation){
     Card(modifier = Modifier
@@ -87,7 +138,7 @@ fun ReservationCard(reservation: Reservation){
             Text(text = "Time: "+reservation.StartChargeTime+"-"+reservation.EndChargeTime)
             Spacer(modifier = Modifier.height(5.dp))
             //pret
-            //Text(text = "Price per hour: "+reservation.totalCost.toString()+" lei")
+            Text(text = "Price per hour: "+reservation.totalCost.toString()+" lei")
         }
     }
 }
@@ -101,6 +152,11 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
     var endChargeTime by remember { mutableStateOf("") }
     val newReservation by remember { mutableStateOf(Reservation()) }
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
+    val notification = remember{ mutableStateOf("") }
+    if(notification.value.isNotEmpty()){
+        Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
+        notification.value = " "
+    }
     Scaffold(//afiseaza lista doar pt user-ul ala
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
@@ -187,25 +243,68 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                             Text("Cancel")
                         }
                         Button(onClick = {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                newReservation.nameOfChargingStation = nameChargingStation
-                                newReservation.idOfUser = idUser.toInt()
-                                newReservation.date = date
-                                newReservation.StartChargeTime = startChargeTime
-                                newReservation.EndChargeTime = endChargeTime
-                                val chargingStation = chargingStationRepository.getChargingStationByName(nameChargingStation).firstOrNull()
-                                val car = sharedViewModel.user_id.value?.let {
-                                    carRepository.getCarByOwnerId(
-                                        it.toInt()).firstOrNull()
+                            CoroutineScope(Dispatchers.IO).launch {
+                                val exists = chargingStationRepository.existsByName(nameChargingStation)
+                                if (exists) {
+                                    val chargingStation = chargingStationRepository.getChargingStationByName(nameChargingStation).firstOrNull()
+                                    if (chargingStation != null) {
+                                        val overlapCount = reservationRepository.checkForOverlappingReservations(
+                                            nameChargingStation, startChargeTime, endChargeTime
+                                        )
+                                        val validationResult = submitReservation(date, startChargeTime, endChargeTime)
+                                        if (validationResult == "Valid") {
+                                            if (overlapCount == 0) {
+                                                val timeDifference = calculateTimeDifference(startChargeTime, endChargeTime)
+                                                val car = sharedViewModel.user_id.value?.let { id ->
+                                                    carRepository.getCarByOwnerId(id.toInt()).firstOrNull()
+                                                }
+                                                if (car != null) {
+                                                    val chargingTime = calculateChargingTime(car.batteryCapacity, chargingStation.chargingPower_kW)
+                                                    val totalCost = calculateTotalCost(timeDifference, chargingTime, chargingStation.pricePerHour)
+                                                    newReservation.nameOfChargingStation = nameChargingStation
+                                                    newReservation.idOfUser = idUser.toInt()
+                                                    newReservation.date = date
+                                                    newReservation.StartChargeTime = startChargeTime
+                                                    newReservation.EndChargeTime = endChargeTime
+                                                    newReservation.totalCost = totalCost.toInt()
+
+                                                    reservationRepository.insertReservation(newReservation)
+                                                    withContext(Dispatchers.Main) {
+                                                        notification.value = "Reservation created successfully."
+                                                        showDialog.value = false
+                                                    }
+                                                } else {
+                                                    withContext(Dispatchers.Main) {
+                                                        notification.value = "Failed to fetch car details."
+                                                    }
+                                                }
+                                            } else {
+                                                withContext(Dispatchers.Main) {
+                                                    notification.value = "Time slot not available. Please choose another time."
+                                                }
+                                            }
+                                        } else {
+                                            withContext(Dispatchers.Main) {
+                                                notification.value = validationResult
+                                            }
+                                        }
+                                    } else {
+                                        withContext(Dispatchers.Main) {
+                                            notification.value = "Charging station does not exist. Please enter a valid station name."
+                                        }
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        notification.value = "Charging station does not exist. Please enter a valid station name."
+                                    }
                                 }
-                                val rez = car?.let { chargingStation?.let { it1 -> calculateChargingTime(it.batteryCapacity, 0, 100, it1.chargingPower_kW) } }
-                                newReservation.totalCost = rez!!
-                                reservationRepository.insertReservation(newReservation)
-                                showDialog.value = false
                             }
-                        }
-                        ) {
+                        }) {
                             Text("Submit")
+                        }
+                        if (notification.value.isNotEmpty()) {
+                            Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
+                            notification.value = ""  // Resetting the notification after showing it
                         }
                     }
                 }

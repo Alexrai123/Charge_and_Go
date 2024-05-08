@@ -19,6 +19,8 @@ interface ChargingStationDao {
     fun getChargingStationByName(name: String): Flow<ChargingStation>
     @Query("SELECT pricePerHour from ChargingStation where name = :name")
     fun getPricePerHourByName(name: String): Flow<Int>
+    @Query("SELECT EXISTS(SELECT 1 FROM ChargingStation WHERE name = :stationName)")
+    suspend fun existsByName(stationName: String): Boolean
     @Query("DELETE FROM ChargingStation WHERE name = :name")
     suspend fun deleteChargingStationByName(name: String)
     @Insert(onConflict = OnConflictStrategy.ABORT)
