@@ -17,6 +17,8 @@ interface ChargingStationDao {
     fun getChargingStationById(name: String): Flow<ChargingStation>
     @Query("SELECT * from ChargingStation WHERE name = :name")
     fun getChargingStationByName(name: String): Flow<ChargingStation>
+    @Query("SELECT pricePerHour from ChargingStation where name = :name")
+    fun getPricePerHourByName(name: String): Flow<Int>
     @Query("DELETE FROM ChargingStation WHERE name = :name")
     suspend fun deleteChargingStationByName(name: String)
     @Insert(onConflict = OnConflictStrategy.ABORT)

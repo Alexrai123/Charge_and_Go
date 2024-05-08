@@ -38,23 +38,32 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.licenta_copie.Database.AppDatabase
 import com.example.licenta_copie.Database.Entity.Reservation
+import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
+import com.example.licenta_copie.Database.OfflineRepository.OfflineChargingStationRepository
 import com.example.licenta_copie.Database.OfflineRepository.OfflineReservationRepository
 import com.example.licenta_copie.ModelView.ReservationViewModel
 import com.example.licenta_copie.ModelView.SharedViewModel
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-
-//id, id statie, *id user, start ch time, end ch time, cost
+import java.time.LocalTime
+import java.time.temporal.ChronoUnit
 
 fun calculateChargingTime(
     batteryCapacity: Int, // Battery capacity in kWh
     initialSOC: Int = 0, // Initial state of charge in percentage
     desiredSOC: Int = 100, // Desired state of charge in percentage
-    chargingPower: Double // Charging power in kW
-): Double {
+    chargingPower: Int // Charging power in kW
+): Int {
     val chargingTimeMinutes = (batteryCapacity * (desiredSOC - initialSOC) / chargingPower) * 60
     return chargingTimeMinutes
+}
+fun calculateTimeDifference(startTime: String, endTime: String): Long {
+    val start = LocalTime.parse(startTime)
+    val end = LocalTime.parse(endTime)
+    val difference = ChronoUnit.MINUTES.between(start, end)
+    return difference
 }
 @Composable
 fun ReservationCard(reservation: Reservation){
@@ -72,13 +81,13 @@ fun ReservationCard(reservation: Reservation){
             Text(text = "Reservation ID: "+reservation.idReservation.toString())
             Spacer(modifier = Modifier.height(5.dp))
             //id statie incarcare
-            Text(text = "Charging Station ID: "+reservation.idReservation.toString())
+            Text(text = "Charging Station ID: "+reservation.nameOfChargingStation)
             Spacer(modifier = Modifier.height(5.dp))
             //startCh-endCh
             Text(text = "Time: "+reservation.StartChargeTime+"-"+reservation.EndChargeTime)
             Spacer(modifier = Modifier.height(5.dp))
-            //pret(treb calculat), vine charge time de mai sus * chargePower din charging station(get charging power from id of charging station)
-            Text(text = "Total Price: "+reservation.totalCost.toString()+" lei")
+            //pret
+            //Text(text = "Price per hour: "+reservation.totalCost.toString()+" lei")
         }
     }
 }
@@ -90,7 +99,6 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
     var date by remember { mutableStateOf("") }
     var startChargeTime by remember { mutableStateOf("") }
     var endChargeTime by remember { mutableStateOf("") }
-    var cost by remember { mutableStateOf("") }
     val newReservation by remember { mutableStateOf(Reservation()) }
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
     Scaffold(//afiseaza lista doar pt user-ul ala
@@ -120,6 +128,12 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
         idUser = sharedViewModel.user_id.value.toString()
         val reservationRepository = OfflineReservationRepository(
             reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
+        )
+        val chargingStationRepository = OfflineChargingStationRepository(
+            chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
+        )
+        val carRepository = OfflineCarRepository(
+            carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
         )
         Dialog(onDismissRequest = { showDialog.value = false },
             properties = DialogProperties(
@@ -179,7 +193,13 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                 newReservation.date = date
                                 newReservation.StartChargeTime = startChargeTime
                                 newReservation.EndChargeTime = endChargeTime
-                                newReservation.totalCost = 100
+                                val chargingStation = chargingStationRepository.getChargingStationByName(nameChargingStation).firstOrNull()
+                                val car = sharedViewModel.user_id.value?.let {
+                                    carRepository.getCarByOwnerId(
+                                        it.toInt()).firstOrNull()
+                                }
+                                val rez = car?.let { chargingStation?.let { it1 -> calculateChargingTime(it.batteryCapacity, 0, 100, it1.chargingPower_kW) } }
+                                newReservation.totalCost = rez!!
                                 reservationRepository.insertReservation(newReservation)
                                 showDialog.value = false
                             }
