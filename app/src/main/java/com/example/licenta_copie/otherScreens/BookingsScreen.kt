@@ -143,15 +143,18 @@ fun ReservationCard(reservation: Reservation, chargingTime: Int, totalCost: Doub
             //id statie incarcare
             Text(text = "Charging Station ID: "+reservation.nameOfChargingStation)
             Spacer(modifier = Modifier.height(5.dp))
+            //data
+            Text(text = "Date: "+reservation.date)
+            Spacer(modifier = Modifier.height(5.dp))
             //startCh-endCh
             Text(text = "Time: "+reservation.StartChargeTime+"-"+reservation.EndChargeTime)
             Spacer(modifier = Modifier.height(5.dp))
             //pret
             Text(text = "Price per hour: "+reservation.totalCost.toString()+" lei")
             //cat se incarca 0-100%
-            //Text(text = "Charging time: $chargingTime minutes from 0% to 100%")
+            Text(text = "Charging time: $chargingTime minutes from 0% to 100%")
             //suma
-            //Text(text = "Total cost: ${totalCost.format(2)} lei")
+            Text(text = "Total cost: ${totalCost.format(2)} lei")
         }
     }
 }
@@ -264,7 +267,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                     val chargingStation = chargingStationRepository.getChargingStationByName(nameChargingStation).firstOrNull()
                                     if (chargingStation != null) {
                                         val overlapCount = reservationRepository.checkForOverlappingReservations(
-                                            nameChargingStation, startChargeTime, endChargeTime
+                                            nameChargingStation, startChargeTime, endChargeTime, date
                                         )
                                         val validationResult = submitReservation(date, startChargeTime, endChargeTime)
                                         if (validationResult == "Valid") {
@@ -307,7 +310,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                                 }
                                             } else {
                                                 withContext(Dispatchers.Main) {
-                                                    notification.value = "Time slot not available. Please choose another time."
+                                                    notification.value = "Time slot not available. Please choose another time or another day"
                                                 }
                                             }
                                         } else {
