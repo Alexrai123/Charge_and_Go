@@ -524,7 +524,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                                 }
                                                 delay(500)
                                                 if (car != null) {
-                                                    val chargingTime = calculateChargingTime(car.batteryCapacity, chargingStation.chargingPower_kW)
+                                                    chargingTime = calculateChargingTime(car.batteryCapacity, chargingStation.chargingPower_kW)
 
                                                     Log.d("battery", car.batteryCapacity.toString())
                                                     Log.d("Charging Power", chargingStation.chargingPower_kW.toString())
