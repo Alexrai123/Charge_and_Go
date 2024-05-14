@@ -17,15 +17,22 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextField
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -34,6 +41,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
@@ -152,15 +160,17 @@ fun ReservationCard(reservation: Reservation, chargingTime: Int, totalCost: Doub
             //pret
             Text(text = "Price per hour: "+reservation.totalCost.toString()+" lei")
             //cat se incarca 0-100%
-            Text(text = "Charging time: $chargingTime minutes from 0% to 100%")
+            //Text(text = "Charging time from 0% to 100%: $chargingTime")
             //suma
-            Text(text = "Total cost: ${totalCost.format(2)} lei")
+            //Text(text = "Total cost: ${totalCost.format(2)} lei")
         }
     }
 }
+@OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableState<Boolean>, sharedViewModel: SharedViewModel) {
+fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableState<Boolean>,
+             sharedViewModel: SharedViewModel, showDialogDelete: MutableState<Boolean>, showDialogEdit: MutableState<Boolean>) {
     var nameChargingStation by remember { mutableStateOf("") }
     var idUser by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
@@ -184,11 +194,23 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                 content = { Icon(Icons.Default.Add, contentDescription = "Add Reservation") }
             )
         },
-        content = {
+        topBar = {
+            TopAppBar(title = { Text(text = "Reservations") },
+                actions = {
+                    IconButton(onClick = { showDialogEdit.value = true }) {
+                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit reservation")
+                    }
+                    IconButton(onClick = { showDialogDelete.value = true }) {
+                        Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete reservation")
+                    }
+                }
+            )
+        },
+        content = {contentPading ->
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(bottom = 70.dp)
+                    .padding(contentPading)
             ) {
                 items(reservations.filter { reservations ->
                     reservations.idOfUser.toString() == sharedViewModel.user_id.value
@@ -334,12 +356,237 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         }
                         if (notification.value.isNotEmpty()) {
                             Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
-                            notification.value = ""  // Resetting the notification after showing it
+                            notification.value = ""
                         }
                     }
                 }
             }
         }
     }
+    if(showDialogDelete.value){
+        var idDelete by remember { mutableStateOf("") }
+        val reservationRepository = OfflineReservationRepository(
+            reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
+        )
+        Dialog(onDismissRequest = { showDialogDelete.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )
+        ){
+            Column(modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center) {
+                TextField(value = idDelete,
+                    onValueChange = { idDelete = it },
+                    label = { Text(text = "ID") }
+                )
+                Row(horizontalArrangement = Arrangement.SpaceEvenly){
+                    Button(onClick = {
+                        idDelete = ""
+                        showDialogDelete.value = false}) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                reservationRepository.deleteReservationById(idDelete.toInt())
+                                showDialogDelete.value = false
+                            }
+                        }, colors = ButtonDefaults.buttonColors(Color.Red)){
+                        Text(text = "Delete")
+                    }
+                }
+            }
+        }
+    }
+    if (showDialogEdit.value) {
+        var id by remember { mutableStateOf("") }
+        var nameOfChargingStation by remember { mutableStateOf("") }
+        var idOfUser by remember { mutableStateOf("") }
+        var date by remember { mutableStateOf("") }
+        var startChargeTime by remember { mutableStateOf("") }
+        var endChargeTime by remember { mutableStateOf("") }
+        var totalCost by remember { mutableStateOf(0.0) }
+
+        val reservationRepository = OfflineReservationRepository(
+            reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
+        )
+        val chargingStationRepository = OfflineChargingStationRepository(
+            chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
+        )
+        val carRepository = OfflineCarRepository(
+            carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
+        )
+        val reservationEdit by remember { mutableStateOf(Reservation()) }
+
+        LaunchedEffect(id) {
+            reservationEdit.nameOfChargingStation = ""
+            reservationEdit.idOfUser = 0
+            reservationEdit.date = ""
+            reservationEdit.StartChargeTime = ""
+            reservationEdit.EndChargeTime = ""
+            reservationEdit.totalCost = 0
+
+            if (id.isNotEmpty()) {
+                delay(500)
+                val reservation = reservationRepository.getReservationById(id.toInt()).firstOrNull()
+                reservation?.let {
+                    reservationEdit.idReservation = it.idReservation
+                    reservationEdit.nameOfChargingStation = it.nameOfChargingStation
+                    reservationEdit.idOfUser = it.idOfUser
+                    reservationEdit.date = it.date
+                    reservationEdit.StartChargeTime = it.StartChargeTime
+                    reservationEdit.EndChargeTime = it.EndChargeTime
+                    reservationEdit.totalCost = it.totalCost
+
+                    nameOfChargingStation = it.nameOfChargingStation
+                    idOfUser = it.idOfUser.toString()
+                    date = it.date
+                    startChargeTime = it.StartChargeTime
+                    endChargeTime = it.EndChargeTime
+                    totalCost = it.totalCost.toDouble()
+                }
+                delay(500)
+            }
+        }
+
+        Dialog(onDismissRequest = { showDialogEdit.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )) {
+            Card(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(455.dp)
+                    .padding(16.dp),
+                shape = RoundedCornerShape(16.dp),
+            ) {
+                Column(modifier = Modifier.padding(5.dp)) {
+                    Text(
+                        text = "Edit Reservation",
+                    )
+                    TextField(
+                        value = id,
+                        onValueChange = { id = it },
+                        label = { Text("Id") }
+                    )
+                    TextField(
+                        value = nameOfChargingStation,
+                        onValueChange = { nameOfChargingStation = it },
+                        label = { Text("Name of Charging Station") }
+                    )
+                    TextField(
+                        value = date,
+                        onValueChange = { date = it },
+                        label = { Text("Date") }
+                    )
+                    TextField(
+                        value = startChargeTime,
+                        onValueChange = { startChargeTime = it },
+                        label = { Text("Start Charge Time") }
+                    )
+                    TextField(
+                        value = endChargeTime,
+                        onValueChange = { endChargeTime = it },
+                        label = { Text("End Charge Time") }
+                    )
+                    Spacer(modifier = Modifier.height(5.dp))
+                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
+                        Button(onClick = {
+                            reservationEdit.nameOfChargingStation = ""
+                            reservationEdit.idOfUser = 0
+                            reservationEdit.date = ""
+                            reservationEdit.StartChargeTime = ""
+                            reservationEdit.EndChargeTime = ""
+                            reservationEdit.totalCost = 0
+                            showDialogEdit.value = false
+                        }) {
+                            Text("Cancel")
+                        }
+                        Button(onClick = {
+                            CoroutineScope(Dispatchers.IO).launch {
+                                val exists = chargingStationRepository.existsByName(nameOfChargingStation)
+                                if (exists) {
+                                    val chargingStation = chargingStationRepository.getChargingStationByName(nameOfChargingStation).firstOrNull()
+                                    if (chargingStation != null) {
+                                        val overlapCount = reservationRepository.checkForOverlappingReservations(
+                                            nameOfChargingStation, startChargeTime, endChargeTime, date, reservationEdit.idReservation
+                                        )
+                                        val validationResult = submitReservation(date, startChargeTime, endChargeTime)
+                                        if (validationResult == "Valid") {
+                                            if (overlapCount == 0) {
+                                                delay(500)
+                                                val timeDifference = calculateTimeDifference(startChargeTime, endChargeTime)
+                                                val car = sharedViewModel.user_id.value?.let { id ->
+                                                    carRepository.getCarByOwnerId(id.toInt()).firstOrNull()
+                                                }
+                                                delay(500)
+                                                if (car != null) {
+                                                    val chargingTime = calculateChargingTime(car.batteryCapacity, chargingStation.chargingPower_kW)
+
+                                                    Log.d("battery", car.batteryCapacity.toString())
+                                                    Log.d("Charging Power", chargingStation.chargingPower_kW.toString())
+                                                    delay(500)
+                                                    totalCost = calculateTotalCost(timeDifference, chargingTime, chargingStation.pricePerHour)
+
+                                                    Log.d("timeDifference", timeDifference.toString())
+                                                    Log.d("chargingTime", chargingTime.toString())
+                                                    Log.d("pricePerHour", chargingStation.pricePerHour.toString())
+                                                    Log.d("totalCost", totalCost.toString())
+
+                                                    reservationEdit.nameOfChargingStation = nameOfChargingStation
+                                                    reservationEdit.idOfUser = idOfUser.toInt()
+                                                    reservationEdit.date = date
+                                                    reservationEdit.StartChargeTime = startChargeTime
+                                                    reservationEdit.EndChargeTime = endChargeTime
+                                                    reservationEdit.totalCost = totalCost.toInt()
+
+                                                    reservationRepository.updateReservationDetails(
+                                                        reservationEdit.idReservation,
+                                                        reservationEdit.date,
+                                                        reservationEdit.StartChargeTime,
+                                                        reservationEdit.EndChargeTime
+                                                    )
+                                                    withContext(Dispatchers.Main) {
+                                                        notification.value = "Reservation modified successfully."
+                                                        showDialogEdit.value = false
+                                                    }
+                                                } else {
+                                                    withContext(Dispatchers.Main) {
+                                                        notification.value = "Failed to fetch car details."
+                                                    }
+                                                }
+                                            } else {
+                                                withContext(Dispatchers.Main) {
+                                                    notification.value = "Time slot not available. Please choose another time or another day"
+                                                }
+                                            }
+                                        } else {
+                                            withContext(Dispatchers.Main) {
+                                                notification.value = validationResult
+                                            }
+                                        }
+                                    } else {
+                                        withContext(Dispatchers.Main) {
+                                            notification.value = "Charging station does not exist. Please enter a valid station name."
+                                        }
+                                    }
+                                } else {
+                                    withContext(Dispatchers.Main) {
+                                        notification.value = "Charging station does not exist. Please enter a valid station name."
+                                    }
+                                }
+                            }
+                        }) {
+                            Text("Submit")
+                        }
+                    }
+                }
+            }
+        }
+    }
+
 }
 

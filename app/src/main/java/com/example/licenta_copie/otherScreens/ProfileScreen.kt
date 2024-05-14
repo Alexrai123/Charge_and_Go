@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AddCircle
@@ -38,6 +39,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -361,7 +363,8 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                     TextField(//capacitate baterie
                         value = batteryCapacity,
                         onValueChange = { batteryCapacity = it },
-                        label = { Text("Battery Capacity") }
+                        label = { Text("Battery Capacity") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                     Row (horizontalArrangement = Arrangement.SpaceEvenly){
                         Button(onClick = {
@@ -500,7 +503,6 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
         idCar = sharedViewModel.car_id.value.toString()
         ownerIdCar = sharedViewModel.user_id.value.toString()
         LaunchedEffect(idCar, ownerIdCar) {
-            //carEdit.ownerId = 0
             carEdit.model = ""
             carEdit.licensePlate = ""
             carEdit.batteryCapacity = 0
@@ -540,12 +542,12 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                     )
                     TextField(
                         value = idCar,
-                        onValueChange = { /*id = it*/ },
+                        onValueChange = { },
                         label = { Text("Id") }
                     )
                     TextField(
                         value = ownerIdCar,
-                        onValueChange = { /*ownerId = it*/ },
+                        onValueChange = { },
                         label = { Text("Owner Id") }
                     )
                     TextField(
@@ -561,7 +563,8 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                     TextField(
                         value = batteryCapacityCar,
                         onValueChange = { batteryCapacityCar = it },
-                        label = { Text("Battery Capacity") }
+                        label = { Text("Battery Capacity") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                     )
                     Spacer(modifier = Modifier.height(5.dp))
                     Row(horizontalArrangement = Arrangement.SpaceEvenly) {
@@ -576,13 +579,18 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                         }
                         Button(modifier = Modifier.padding(start = 95.dp),
                             onClick = {
-                                CoroutineScope(Dispatchers.Main).launch {
-                                    carEdit.ownerId = ownerIdCar.toInt()
-                                    carEdit.model = modelCar
-                                    carEdit.licensePlate = licensePlateCar
-                                    carEdit.batteryCapacity = batteryCapacityCar.toInt()
-                                    carRepository.updateCar(carEdit)
-                                    showDialogEditCar.value = false
+                                val batteryCapacityCheck = batteryCapacityCar.toDoubleOrNull()
+                                if (batteryCapacityCheck != null && batteryCapacityCheck == batteryCapacityCheck.toInt().toDouble()) {
+                                    CoroutineScope(Dispatchers.Main).launch {
+                                        carEdit.ownerId = ownerIdCar.toInt()
+                                        carEdit.model = modelCar
+                                        carEdit.licensePlate = licensePlateCar
+                                        carEdit.batteryCapacity = batteryCapacityCheck.toInt()
+                                        carRepositoryCar.updateCar(carEdit)
+                                        showDialogEditCar.value = false
+                                    }
+                                } else {
+                                    notification.value = "Battery Capacity must be an integer"
                                 }
                             }
                         ) {

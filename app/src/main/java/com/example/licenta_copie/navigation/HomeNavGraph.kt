@@ -56,7 +56,9 @@ fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewMo
             )
             val reservationViewModel = ReservationViewModel(reservationRepository)
             val showDialog = remember { mutableStateOf(false) }
-            Bookings(reservationViewModel, showDialog, sharedViewModel)
+            val showDialogDelete = remember { mutableStateOf(false) }
+            val showDialogEdit = remember { mutableStateOf(false) }
+            Bookings(reservationViewModel, showDialog, sharedViewModel, showDialogDelete, showDialogEdit)
         }
         composable(route = AuthScreen.Login.route){
             LoginScreen(

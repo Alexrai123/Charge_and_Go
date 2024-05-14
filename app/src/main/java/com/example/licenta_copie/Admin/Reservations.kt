@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -95,9 +94,9 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
         topBar = {
             TopAppBar(title = { Text(text = "Reservations") },
                 actions = {
-                    IconButton(onClick = { showDialogEdit.value = true }) {
-                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit reservation")
-                    }
+//                    IconButton(onClick = { showDialogEdit.value = true }) {
+//                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit reservation")
+//                    }
                     IconButton(onClick = { showDialogDelete.value = true }) {
                         Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete reservation")
                     }
