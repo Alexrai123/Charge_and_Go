@@ -15,6 +15,8 @@ interface CarDao {
     fun getAllCars(): Flow<List<Car>>
     @Query("SELECT * from Car WHERE ownerId = :ownerId")
     fun getCarByOwnerId(ownerId: Int): Flow<Car?>
+    @Query("SELECT COUNT(*) FROM Car WHERE ownerId = :ownerId")
+    fun countCarsByOwnerId(ownerId: Int): Int
     @Query("SELECT batteryCapacity FROM Car WHERE id = :id")
     fun getBatteryCapacityById(id: Int): Flow<Int>
     @Query("SELECT * from Car WHERE id = :id")

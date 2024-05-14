@@ -378,12 +378,15 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                         }
                         Button(modifier = Modifier.padding(start = 65.dp),
                             onClick = {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                newCar.model = model
-                                newCar.licensePlate = licensePlate
-                                newCar.batteryCapacity = batteryCapacity.toInt()
-                                carRepository.insertCar(newCar)
-                                showDialogAddCar.value = false
+                            CoroutineScope(Dispatchers.IO).launch {
+                                if (carRepository.countCarsByOwnerId(newCar.ownerId) == 0){
+                                    newCar.model = model
+                                    newCar.licensePlate = licensePlate
+                                    newCar.batteryCapacity = batteryCapacity.toInt()
+                                    carRepository.insertCar(newCar)
+                                    showDialogAddCar.value = false
+                                }
+                                else notification.value = "Each user can own only 1 car!"
                             }
                         }
                         ) {
