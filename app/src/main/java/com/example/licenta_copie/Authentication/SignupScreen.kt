@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -35,6 +36,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.licenta_copie.Database.AppDatabase
@@ -49,6 +51,20 @@ import com.example.licenta_copie.ui.theme.unfocusedTextFieldText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+
+fun validateEmail(email: String): Boolean {
+    val emailRegex = "^[\\w]{1,20}@(gmail\\.com|yahoo\\.com|student\\.usv\\.ro|hotmail\\.com|outlook\\.com)$".toRegex()
+    return email.matches(emailRegex)
+}
+fun validatePassword(password: String): Boolean {
+    val passwordRegex = "^(?=.*[0-9])(?=.*[a-z])(?=.*[A-Z])(?=.*[!@#\$%^&*])(?=\\S+$).{5,30}$".toRegex()
+    return password.matches(passwordRegex)
+}
+fun validatePhoneNumber(phoneNumber: String): Boolean {
+    val phoneRegex = "^\\+(1|44|33|49|40|\\d{1,3})([ -]?\\d){8,10}$".toRegex()
+    return phoneNumber.matches(phoneRegex)
+}
 
 @Composable
 fun SignupScreen(onSign: () -> Unit) {
@@ -62,6 +78,29 @@ fun SignupScreen(onSign: () -> Unit) {
     if(notification.value.isNotEmpty()){
         Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
         notification.value = " "
+    }
+    fun performSignUp() {
+        when {
+            !validateEmail(emailInput) -> notification.value = "Invalid email format."
+            !validatePhoneNumber(phoneNumberInput) -> notification.value = "Invalid phone number format."
+            !validatePassword(passwordInput) -> notification.value = "Password must include upper, lower, number, and special characters."
+            else -> {
+                CoroutineScope(Dispatchers.IO).launch {
+                    val isValidUser = !userRepository.userExists(emailInput, passwordInput)
+                    if (isValidUser) {
+                        val user = User(email = emailInput, phoneNumber = phoneNumberInput, password = passwordInput)
+                        userRepository.insertUser(user)
+                        withContext(Dispatchers.Main) {
+                            onSign()
+                        }
+                    } else {
+                        withContext(Dispatchers.Main) {
+                            notification.value = "This user already exists!"
+                        }
+                    }
+                }
+            }
+        }
     }
     Surface {
         Column(modifier = Modifier.fillMaxSize()) {
@@ -102,6 +141,7 @@ fun SignupScreen(onSign: () -> Unit) {
                         focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
                         unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
                     ),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 Spacer(modifier = Modifier.height(15.dp))
                 TextField(
@@ -122,18 +162,9 @@ fun SignupScreen(onSign: () -> Unit) {
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(
                     modifier = Modifier
-                        .fillMaxWidth()
+                        .align(Alignment.CenterHorizontally)
                         .height(40.dp),
-                    onClick = {
-                        val user = User(email = emailInput, phoneNumber = phoneNumberInput, password = passwordInput)
-                        CoroutineScope(Dispatchers.Main).launch {
-                            if(!userRepository.userExists(emailInput, passwordInput)) {
-                                userRepository.insertUser(user)
-                                onSign()
-                            }
-                            else notification.value = "This user already exists!"
-                        }
-                    },
+                    onClick = { performSignUp() },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isSystemInDarkTheme()) BlueGray else Black,
                         contentColor = Color.White
