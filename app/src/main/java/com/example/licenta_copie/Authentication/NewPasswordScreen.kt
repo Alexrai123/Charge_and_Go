@@ -1,6 +1,5 @@
 package com.example.licenta_copie.Authentication
 
-import android.annotation.SuppressLint
 import android.widget.Toast
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.isSystemInDarkTheme
@@ -47,20 +46,22 @@ import com.example.licenta_copie.ui.theme.unfocusedTextFieldText
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
-@SuppressLint("CoroutineCreationDuringComposition")
 @Composable
-fun ForgotPasswordScreen( onForgot: () -> Unit, sharedViewModel: SharedViewModel) {
-    var email by remember { mutableStateOf("") }
-    var phoneNumber by remember { mutableStateOf("") }
-    val notification = remember{ mutableStateOf("") }
-    if(notification.value.isNotEmpty()){
-        Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
-        notification.value = " "
-    }
+fun NewPasswordScreen(onChangePassword: () -> Unit, sharedViewModel: SharedViewModel) {
+    var newPassword by remember { mutableStateOf("") }
     val userRepository = OfflineUserRepository(
         userDao = AppDatabase.getDatabase(LocalContext.current).userDao()
     )
+    val notification = remember { mutableStateOf("") }
+    val context = LocalContext.current
+
+    if (notification.value.isNotEmpty()) {
+        Toast.makeText(context, notification.value, Toast.LENGTH_LONG).show()
+        notification.value = ""
+    }
+
     Surface {
         Column(modifier = Modifier.fillMaxSize()) {
             TopSection()
@@ -72,10 +73,10 @@ fun ForgotPasswordScreen( onForgot: () -> Unit, sharedViewModel: SharedViewModel
             ) {
                 androidx.compose.material3.TextField(
                     modifier = Modifier.fillMaxWidth(),
-                    value = email,
-                    onValueChange = { email = it },
+                    value = newPassword,
+                    onValueChange = { newPassword = it },
                     label = {
-                        Text(text = "Email", style = MaterialTheme.typography.labelMedium)
+                        Text(text = "New Password", style = MaterialTheme.typography.labelMedium)
                     },
                     colors = TextFieldDefaults.colors(
                         focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
@@ -86,21 +87,6 @@ fun ForgotPasswordScreen( onForgot: () -> Unit, sharedViewModel: SharedViewModel
                     ),
                 )
                 Spacer(modifier = Modifier.height(10.dp))
-                androidx.compose.material3.TextField(
-                    modifier = Modifier.fillMaxWidth(),
-                    value = phoneNumber,
-                    onValueChange = { phoneNumber = it },
-                    label = {
-                        Text(text = "Phone Number", style = MaterialTheme.typography.labelMedium)
-                    },
-                    colors = TextFieldDefaults.colors(
-                        focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                        unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                        disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                        focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
-                        unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-                    ),
-                )
                 Spacer(modifier = Modifier.height(15.dp))
                 Spacer(modifier = Modifier.height(20.dp))
                 Button(
@@ -108,17 +94,18 @@ fun ForgotPasswordScreen( onForgot: () -> Unit, sharedViewModel: SharedViewModel
                         .fillMaxWidth()
                         .height(40.dp),
                     onClick = {
-                        CoroutineScope(Dispatchers.Main).launch {
-                            if(userRepository.emailAndPhoneNumberExists(email, phoneNumber)){
-                                sharedViewModel.forgotPassword_email.value = email
-                                sharedViewModel.forgotPassword_phoneNumber.value = phoneNumber
-                                onForgot()
-                            }
-                            else{
-                                notification.value = "Invalid email or phone number"
+                        CoroutineScope(Dispatchers.IO).launch {
+                            sharedViewModel.forgotPassword_email.value?.let { email ->
+                                sharedViewModel.forgotPassword_phoneNumber.value?.let { phoneNumber ->
+                                    userRepository.updatePassword(email, phoneNumber, newPassword)
+                                    withContext(Dispatchers.Main) {
+                                        notification.value = "Password Updated Successfully"
+                                        onChangePassword()
+                                    }
+                                }
                             }
                         }
-                              },
+                    },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = if (isSystemInDarkTheme()) BlueGray else Black,
                         contentColor = Color.White

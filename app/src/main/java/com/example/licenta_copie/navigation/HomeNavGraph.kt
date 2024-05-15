@@ -19,6 +19,7 @@ import com.example.licenta_copie.Admin.Reservations
 import com.example.licenta_copie.Admin.Users
 import com.example.licenta_copie.Authentication.ForgotPasswordScreen
 import com.example.licenta_copie.Authentication.LoginScreen
+import com.example.licenta_copie.Authentication.NewPasswordScreen
 import com.example.licenta_copie.Authentication.SignupScreen
 import com.example.licenta_copie.Database.AppDatabase
 import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
@@ -41,7 +42,7 @@ fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewMo
             val showDialogAddCar = remember { mutableStateOf(false) }
             val showDialogEditProfile = remember { mutableStateOf(false) }
             val showDialogEditCar = remember { mutableStateOf(false) }
-            Profile(showDialogAddCar, sharedViewModel, onLogout = { navController.navigate(AuthScreen.Login.route) }, showDialogEditProfile)
+            Profile(showDialogAddCar, sharedViewModel, onLogout = { navController.navigate(AuthScreen.Login.route) }, showDialogEditCar)
         }
         composable(route = BottomBarScreen.Map.route){
             val chargingStationRepository = OfflineChargingStationRepository(
@@ -56,7 +57,9 @@ fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewMo
             )
             val reservationViewModel = ReservationViewModel(reservationRepository)
             val showDialog = remember { mutableStateOf(false) }
-            Bookings(reservationViewModel, showDialog, sharedViewModel)
+            val showDialogDelete = remember { mutableStateOf(false) }
+            val showDialogEdit = remember { mutableStateOf(false) }
+            Bookings(reservationViewModel, showDialog, sharedViewModel, showDialogDelete, showDialogEdit)
         }
         composable(route = AuthScreen.Login.route){
             LoginScreen(
@@ -76,7 +79,14 @@ fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewMo
         }
         composable(route = AuthScreen.ForgotPassword.route){
             ForgotPasswordScreen(
-                onForgot = {navController.navigate(AuthScreen.Login.route)}
+                onForgot = {navController.navigate(AuthScreen.NewPassword.route)},
+                sharedViewModel = sharedViewModel
+            )
+        }
+        composable(route = AuthScreen.NewPassword.route){
+            NewPasswordScreen(
+                onChangePassword = {navController.navigate(AuthScreen.Login.route)},
+                sharedViewModel = sharedViewModel
             )
         }
         composable(route = AuthScreen.AdminPage.route){

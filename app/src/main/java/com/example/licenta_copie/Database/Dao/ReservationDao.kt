@@ -19,8 +19,34 @@ interface ReservationDao {
     fun getReservationById(id: Int): Flow<Reservation>
     @Query("SELECT * FROM Reservation ORDER BY date ASC")
     fun getAllReservationsByData(): Flow<List<Reservation>>
+    @Query("UPDATE Reservation SET date = :newDate, StartChargeTime = :newStartChargeTime, EndChargeTime = :newEndChargeTime WHERE idReservation = :idReservation")
+    fun updateReservationDetails(idReservation: Int, newDate: String, newStartChargeTime: String, newEndChargeTime: String)
     @Query("DELETE FROM Reservation WHERE idReservation = :id")
     suspend fun deleteReservationById(id: Int)
+    @Query("""
+    SELECT * FROM Reservation 
+    WHERE nameOfChargingStation = :nameOfChargingStation 
+      AND date = :date 
+      AND idReservation != :currentReservationId
+      AND ((StartChargeTime < :endChargeTime AND EndChargeTime > :startChargeTime)
+      OR (StartChargeTime <= :startChargeTime AND EndChargeTime >= :endChargeTime))""")
+    fun getOverlappingReservations(
+        nameOfChargingStation: String,
+        startChargeTime: String,
+        endChargeTime: String,
+        date: String,
+        currentReservationId: Int
+    ): List<Reservation>
+
+    @Query("""
+    SELECT COUNT(*) FROM Reservation 
+    WHERE nameOfChargingStation = :chargingStationName 
+    AND date = :newDate
+    AND (
+        (StartChargeTime < :newEndTime AND EndChargeTime > :newStartTime) OR 
+        (StartChargeTime < :newStartTime AND EndChargeTime > :newEndTime) OR 
+        (StartChargeTime > :newStartTime AND EndChargeTime < :newEndTime))""")
+    suspend fun checkForOverlappingReservations(chargingStationName: String, newStartTime: String, newEndTime: String, newDate: String): Int
     @Insert(onConflict = OnConflictStrategy.ABORT)
     suspend fun insert(reservation: Reservation)
     @Update

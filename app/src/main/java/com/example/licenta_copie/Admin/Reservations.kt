@@ -14,7 +14,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
@@ -31,6 +30,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -43,6 +43,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.example.licenta_copie.Database.AppDatabase
 import com.example.licenta_copie.Database.Entity.Reservation
+import com.example.licenta_copie.Database.OfflineRepository.OfflineChargingStationRepository
 import com.example.licenta_copie.Database.OfflineRepository.OfflineReservationRepository
 import com.example.licenta_copie.ModelView.ReservationViewModel
 import kotlinx.coroutines.CoroutineScope
@@ -79,8 +80,8 @@ fun ReservationCard(reservation: Reservation){
             //startCh-endCh
             Text(text = "Time: "+reservation.StartChargeTime+"-"+reservation.EndChargeTime)
             Spacer(modifier = Modifier.height(5.dp))
-            //pret(treb calculat), vine charge time de mai sus * chargePower din charging station(get charging power from id of charging station)
-            Text(text = "Total Price: "+reservation.totalCost.toString()+" lei")
+            //pret
+            //Text(text = "Total Price: "+reservation.totalCost+" lei")
         }
     }
 }
@@ -93,9 +94,9 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
         topBar = {
             TopAppBar(title = { Text(text = "Reservations") },
                 actions = {
-                    IconButton(onClick = { showDialogEdit.value = true }) {
-                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit reservation")
-                    }
+//                    IconButton(onClick = { showDialogEdit.value = true }) {
+//                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit reservation")
+//                    }
                     IconButton(onClick = { showDialogDelete.value = true }) {
                         Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete reservation")
                     }
@@ -164,8 +165,12 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
         var date by remember { mutableStateOf("") }
         var startChargeTime by remember { mutableStateOf("") }
         var endChargeTime by remember { mutableStateOf("") }
+        var totalCost by remember { mutableIntStateOf(0) }
         val reservationRepository = OfflineReservationRepository(
             reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
+        )
+        val chargingStationRepository = OfflineChargingStationRepository(
+            chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
         )
         val reservationEdit by remember { mutableStateOf(Reservation()) }
         LaunchedEffect(id) {
@@ -185,13 +190,14 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
                     reservationEdit.date = it.date
                     reservationEdit.StartChargeTime = it.StartChargeTime
                     reservationEdit.EndChargeTime = it.EndChargeTime
-                    reservationEdit.totalCost = 0
+                    reservationEdit.totalCost = it.totalCost
 
                     nameOfChargingStation = it.nameOfChargingStation
                     idOfUser = it.idOfUser.toString()
                     date = it.date
                     startChargeTime = it.StartChargeTime
                     endChargeTime = it.EndChargeTime
+                    totalCost = it.totalCost
                 }
                 delay(500)
             }
@@ -262,7 +268,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
                                     reservationEdit.date = date
                                     reservationEdit.StartChargeTime = startChargeTime
                                     reservationEdit.EndChargeTime = endChargeTime
-                                    reservationEdit.totalCost = 0
+                                    reservationEdit.totalCost = totalCost
                                     reservationRepository.updateReservation(reservationEdit)
                                     showDialogEdit.value = false
                                 }

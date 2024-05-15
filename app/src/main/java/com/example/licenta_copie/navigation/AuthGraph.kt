@@ -14,6 +14,7 @@ import com.example.licenta_copie.Admin.Reservations
 import com.example.licenta_copie.Admin.Users
 import com.example.licenta_copie.Authentication.ForgotPasswordScreen
 import com.example.licenta_copie.Authentication.LoginScreen
+import com.example.licenta_copie.Authentication.NewPasswordScreen
 import com.example.licenta_copie.Authentication.SignupScreen
 import com.example.licenta_copie.Database.AppDatabase
 import com.example.licenta_copie.Database.OfflineRepository.OfflineCarRepository
@@ -46,7 +47,14 @@ fun NavGraphBuilder.authNavGraph(navController: NavHostController, sharedViewMod
         }
         composable(route = AuthScreen.ForgotPassword.route){
             ForgotPasswordScreen(
-                onForgot = {navController.navigate(AuthScreen.Login.route)}
+                onForgot = {navController.navigate(AuthScreen.NewPassword.route)},
+                sharedViewModel = sharedViewModel
+            )
+        }
+        composable(route = AuthScreen.NewPassword.route){
+            NewPasswordScreen(
+                onChangePassword = {navController.navigate(AuthScreen.Login.route)},
+                sharedViewModel = sharedViewModel
             )
         }
         composable(route = AuthScreen.AdminPage.route){
@@ -100,6 +108,7 @@ sealed class AuthScreen(val route: String) {
     object Login : AuthScreen(route = "LoginScreen")
     object Signup : AuthScreen(route = "SignupScreen")
     object ForgotPassword : AuthScreen(route = "ForgotPasswordScreen")
+    object NewPassword : AuthScreen(route = "NewPasswordScreen")
     object AdminPage : AuthScreen(route = "AdminPage")
     object Users : AuthScreen(route = "Users")
     object Cars : AuthScreen(route = "Cars")

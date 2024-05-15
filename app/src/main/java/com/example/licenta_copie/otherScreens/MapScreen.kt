@@ -20,21 +20,18 @@ import com.google.maps.android.compose.rememberCameraPositionState
 @Composable
 fun MapScreen(chargingStationViewModel: ChargingStationViewModel){
     val chargingStations by chargingStationViewModel.chargingStations.collectAsState(initial = emptyList())
-    val suceavaState = MarkerState(position = LatLng(47.65, 26.28))
-    val cameraPositionState = rememberCameraPositionState{
-        position = CameraPosition.fromLatLngZoom( LatLng(47.65, 26.28), 10f)
-    }
     Scaffold(
         content = {
             GoogleMap(
                 modifier = Modifier.padding(bottom = 70.dp),
                 cameraPositionState = rememberCameraPositionState {
-                    position = CameraPosition.fromLatLngZoom(LatLng(47.6, 26.2), 10f) }
+                    position = CameraPosition.fromLatLngZoom(LatLng(47.65, 26.247), 13f) }
             ) {
                 chargingStations.forEach { chargingStation ->
                     val markerPosition = LatLng(chargingStation.lat, chargingStation.lng)
                     val markerState = MarkerState(position = markerPosition)
-                    Marker(state = markerState, title = chargingStation.name)
+                    val title = chargingStation.name + ", " +chargingStation.pricePerHour+"lei/h" + ", "+ chargingStation.chargingPower_kW + "kW"
+                    Marker(state = markerState, title = title)
                 }
             }
         }

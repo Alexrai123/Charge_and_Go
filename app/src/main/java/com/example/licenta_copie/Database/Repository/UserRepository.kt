@@ -6,6 +6,9 @@ import kotlinx.coroutines.flow.Flow
 interface UserRepository {
     fun getPasswordById(id: Int): Flow<String?>
     fun getPasswordByEmail(email: String): Flow<String?>
+    suspend fun updatePassword(email: String, phoneNumber: String, newPassword: String)
+    suspend fun updateEmail(newEmail: String, phoneNumber: String, password: String)
+    suspend fun updatePhoneNumber(email: String, newPhoneNumber: String, password: String)
     fun getAllUsersStream(): Flow<List<User>>
     fun getUserStream(id: Int): Flow<User?>
     fun getUserByEmailAndPassword(email: String, password: String): Flow<User?>
@@ -14,6 +17,7 @@ interface UserRepository {
     fun getUserById(id: Int): Flow<User?>
     suspend fun deleteUserById(id: Int)
     suspend fun userExists(email: String, password: String): Boolean
+    suspend fun emailAndPhoneNumberExists(email: String, phoneNumber: String): Boolean
     suspend fun insertUser(user: User)
     suspend fun deleteUser(user: User)
     suspend fun updateUser(user: User)

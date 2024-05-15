@@ -13,6 +13,14 @@ import kotlinx.coroutines.flow.Flow
 interface UserDao {
     @Query("SELECT EXISTS(SELECT 1 FROM User WHERE email = :email AND password = :password)")
     suspend fun userExists(email: String, password: String): Boolean
+    @Query("SELECT EXISTS(SELECT 1 FROM User WHERE email = :email AND phoneNumber = :phoneNumber)")
+    suspend fun emailAndPhoneNumberExists(email: String, phoneNumber: String): Boolean
+    @Query("UPDATE User SET password = :newPassword WHERE email = :email AND phoneNumber = :phoneNumber")
+    fun updatePassword(email: String, phoneNumber: String, newPassword: String)
+    @Query("UPDATE User SET email = :newEmail WHERE password = :password AND phoneNumber = :phoneNumber")
+    fun updateEmail(newEmail: String, phoneNumber: String, password: String)
+    @Query("UPDATE User SET phoneNumber = :newPhoneNumber WHERE email = :email AND password = :password")
+    fun updatePhoneNumber(email: String, newPhoneNumber: String, password: String)
     @Query("SELECT password FROM User WHERE id = :id")
     fun getPasswordById(id: Int): Flow<String?>
     @Query("SELECT password FROM User WHERE email = :email")
