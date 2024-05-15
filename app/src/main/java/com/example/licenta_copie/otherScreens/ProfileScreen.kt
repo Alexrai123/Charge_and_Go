@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -17,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -37,6 +39,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
@@ -58,6 +61,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 fun convertStringToStars(input: String): String {
     val convertedString = StringBuilder()
@@ -77,6 +81,7 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
+    val showDialogEditPassword = remember { mutableStateOf(false) }
     //car
     var carId by remember { mutableStateOf("") }
     var model by remember { mutableStateOf("") }
@@ -185,26 +190,26 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                     )
                 }
                 Spacer(modifier = Modifier.height(15.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, end = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "Username: ", modifier = Modifier.width(100.dp))
-                    TextField(
-                        value = username,
-                        onValueChange = { },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.height(15.dp))
+//                Row(
+//                    modifier = Modifier
+//                        .fillMaxWidth()
+//                        .padding(start = 4.dp, end = 4.dp),
+//                    verticalAlignment = Alignment.CenterVertically
+//                ) {
+//                    Text(text = "Username: ", modifier = Modifier.width(100.dp))
+//                    TextField(
+//                        value = username,
+//                        onValueChange = { },
+//                        colors = TextFieldDefaults.colors(
+//                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+//                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+//                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
+//                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
+//                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
+//                        )
+//                    )
+//                }
+//                Spacer(modifier = Modifier.height(15.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -241,7 +246,12 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                             disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
                             focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
                             unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-                        )
+                        ),
+                        trailingIcon = {
+                            IconButton(onClick = { showDialogEditPassword.value = true }) {
+                                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Password")
+                            }
+                        }
                     )
                 }
                 Spacer(modifier = Modifier.height(15.dp))
@@ -399,100 +409,6 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
     }
     sharedViewModel.car_id.value = carId
     sharedViewModel.user_id.value = id
-//    if(showDialogEditProfile.value){
-//        var idUser by remember { mutableStateOf("") }
-//        var emailUser by remember { mutableStateOf("") }
-//        var phoneNumberUser by remember { mutableStateOf("") }
-//        var passwordUser by remember { mutableStateOf("") }
-//        val userRepositoryUser = OfflineUserRepository(
-//            userDao = AppDatabase.getDatabase(LocalContext.current).userDao()
-//        )
-//        val userEdit by remember { mutableStateOf(User()) }
-//        idUser = sharedViewModel.user_id.value.toString()
-//        LaunchedEffect(idUser) {
-//            userEdit.email = ""
-//            userEdit.phoneNumber = ""
-//            userEdit.password = ""
-//            if(idUser.isNotEmpty()){
-//                delay(500)
-//                val user = userRepositoryUser.getUserById(idUser.toInt()).firstOrNull()
-//                user?.let {
-//                    user.id = it.id
-//                    user.email = it.email
-//                    user.phoneNumber = it.phoneNumber
-//                    user.password = it.password
-//
-//                    idUser = it.id.toString()
-//                    emailUser = it.email
-//                    phoneNumberUser = it.phoneNumber
-//                    passwordUser = it.password
-//                }
-//                delay(500)
-//            }
-//        }
-//        Dialog(onDismissRequest = { showDialogEditCar.value = false },
-//            properties = DialogProperties(
-//                dismissOnClickOutside = false,
-//                dismissOnBackPress = false
-//            )) {
-//            Card(modifier = Modifier
-//                .fillMaxWidth()
-//                .height(455.dp)
-//                .padding(16.dp),
-//                shape = RoundedCornerShape(16.dp),
-//            ) {
-//                Column(modifier = Modifier.padding(5.dp)) {
-//                    Text(
-//                        text = "Edit Profile",
-//                    )
-//                    TextField(
-//                        value = idUser,
-//                        onValueChange = { /*idUser = it*/ },
-//                        label = { Text("Id") }
-//                    )
-//                    TextField(
-//                        value = emailUser,
-//                        onValueChange = { emailUser = it },
-//                        label = { Text("Email") }
-//                    )
-//                    TextField(
-//                        value = phoneNumberUser,
-//                        onValueChange = { phoneNumberUser = it },
-//                        label = { Text("Phone Number") }
-//                    )
-//                    TextField(
-//                        value = passwordUser,
-//                        onValueChange = { passwordUser = it },
-//                        label = { Text("Password") }
-//                    )
-//                    Spacer(modifier = Modifier.height(5.dp))
-//                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
-//                        Button(onClick = {
-//                            userEdit.email = ""
-//                            userEdit.phoneNumber = ""
-//                            userEdit.password = ""
-//                            showDialogEditProfile.value = false
-//                        }){
-//                            Text("Cancel")
-//                        }
-//                        Button(modifier = Modifier.padding(start = 95.dp),
-//                            onClick = {
-//                                CoroutineScope(Dispatchers.Main).launch {
-//                                    userEdit.email = emailUser
-//                                    userEdit.phoneNumber = phoneNumberUser
-//                                    userEdit.password = passwordUser
-//                                    userRepositoryUser.updateUser(userEdit)
-//                                    showDialogEditProfile.value = false
-//                                }
-//                            }
-//                        ) {
-//                            Text("Submit")
-//                        }
-//                    }
-//                }
-//            }
-//        }
-//    }
     if(showDialogEditCar.value){
         var idCar by remember { mutableStateOf("") }
         var ownerIdCar by remember { mutableStateOf("") }
@@ -599,6 +515,46 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                         ) {
                             Text("Submit")
                         }
+                    }
+                }
+            }
+        }
+    }
+    if(showDialogEditPassword.value){
+        var newPassword by remember { mutableStateOf("") }
+        Dialog(onDismissRequest = { showDialogEditPassword.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )){
+            Column(modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center) {
+                TextField(value = newPassword,
+                    onValueChange = { newPassword = it },
+                    label = { Text(text = "New Password") }
+                )
+                Row(horizontalArrangement = Arrangement.SpaceEvenly){
+                    Button(
+                        onClick = {
+                        newPassword = ""
+                        showDialogEditPassword.value = false},
+                        colors = ButtonDefaults.buttonColors(Color.Red)) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                sharedViewModel.user_password.value = newPassword
+                                userRepository.updatePassword(email, phoneNumber, newPassword)
+                                withContext(Dispatchers.Main) {
+                                    notification.value = "Password updated successfully"
+                                    showDialogEditPassword.value = false
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(Color.Blue)){
+                        Text(text = "Change Password")
                     }
                 }
             }
