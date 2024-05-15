@@ -26,5 +26,5 @@ data class Reservation(
     var date: String = "",
     var StartChargeTime: String = "",
     var EndChargeTime: String = "",
-    var totalCost: Int = 0
+    var totalCost: Double = 0.0
 )

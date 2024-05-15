@@ -179,7 +179,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
             reservationEdit.date = ""
             reservationEdit.StartChargeTime = ""
             reservationEdit.EndChargeTime = ""
-            reservationEdit.totalCost = 0
+            reservationEdit.totalCost = 0.0
             if(id.isNotEmpty()){
                 delay(500)
                 val reservation = reservationRepository.getReservationById(id.toInt()).firstOrNull()
@@ -197,7 +197,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
                     date = it.date
                     startChargeTime = it.StartChargeTime
                     endChargeTime = it.EndChargeTime
-                    totalCost = it.totalCost
+                    totalCost = it.totalCost.toInt()
                 }
                 delay(500)
             }
@@ -255,7 +255,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
                             reservationEdit.date = ""
                             reservationEdit.StartChargeTime = ""
                             reservationEdit.EndChargeTime = ""
-                            reservationEdit.totalCost = 0
+                            reservationEdit.totalCost = 0.0
                             showDialogEdit.value = false
                         }){
                             Text("Cancel")
@@ -268,7 +268,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
                                     reservationEdit.date = date
                                     reservationEdit.StartChargeTime = startChargeTime
                                     reservationEdit.EndChargeTime = endChargeTime
-                                    reservationEdit.totalCost = totalCost
+                                    reservationEdit.totalCost = totalCost.toDouble()
                                     reservationRepository.updateReservation(reservationEdit)
                                     showDialogEdit.value = false
                                 }

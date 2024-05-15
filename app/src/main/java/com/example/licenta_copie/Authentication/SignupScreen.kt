@@ -141,7 +141,7 @@ fun SignupScreen(onSign: () -> Unit) {
                         focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
                         unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
                     ),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone)
                 )
                 Spacer(modifier = Modifier.height(15.dp))
                 TextField(
