@@ -584,7 +584,8 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                 verticalArrangement = Arrangement.Center) {
                 TextField(value = newPhoneNumber,
                     onValueChange = { newPhoneNumber = it },
-                    label = { Text(text = "New Phone Number") }
+                    label = { Text(text = "New Phone Number") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 Row(horizontalArrangement = Arrangement.SpaceEvenly){
                     Button(

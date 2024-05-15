@@ -1,7 +1,6 @@
 package com.example.licenta_copie.otherScreens
 
 import android.annotation.SuppressLint
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
@@ -65,8 +64,6 @@ import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
 import java.time.format.DateTimeParseException
-import java.time.temporal.ChronoUnit
-import kotlin.math.min
 
 //**************************VALIDARI DATE**********************
 fun isValidTime(time: String): Boolean {
@@ -77,14 +74,37 @@ fun isValidTime(time: String): Boolean {
         false
     }
 }
+
 fun isValidDate(date: String): Boolean {
     return try {
         val parsedDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"))
-        val day = parsedDate.dayOfMonth
-        val month = parsedDate.monthValue
-        val year = parsedDate.year
-        day in 1..31 && month in 1..12 && year >= 1900 && year <= LocalDate.now().plusYears(100).year
+        val today = LocalDate.now()
+        val oneYearLater = today.plusYears(1)
+        parsedDate.isAfter(today.minusDays(1)) && parsedDate.isBefore(oneYearLater.plusDays(1))
     } catch (e: DateTimeParseException) {
+        false
+    }
+}
+
+fun isReservationCurrent(reservationDate: String, reservationTime: String): Boolean {
+    return try {
+        val currentDate = LocalDate.now()
+        val currentTime = LocalTime.now()
+
+        val formatterDate = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+        val parsedDate = LocalDate.parse(reservationDate, formatterDate)
+
+        if (parsedDate.isBefore(currentDate)) {
+            return false // Reservation date is in the past
+        } else if (parsedDate.isEqual(currentDate)) {
+            // If the reservation date is today
+            val formatterTime = DateTimeFormatter.ofPattern("HH:mm")
+            val parsedTime = LocalTime.parse(reservationTime, formatterTime)
+            return !parsedTime.isBefore(currentTime.plusMinutes(5))
+        }
+        true
+    } catch (e: DateTimeParseException) {
+        e.printStackTrace()
         false
     }
 }
@@ -109,32 +129,14 @@ fun submitReservation(date: String, startTime: String, endTime: String): String 
     if (!isValidTimeInterval(startTime, endTime)) {
         return "End time must be after start time."
     }
+    if (!isReservationCurrent(date, startTime)) {
+        return "Reservation time must be at least 5 minutes in the future."
+    }
     return "Valid"
-}
-//*************************CALCULAT TIMP SI SUMA INCARCARE************************
-fun calculateTimeDifference(startTime: String, endTime: String): Long {
-    val start = LocalTime.parse(startTime, DateTimeFormatter.ofPattern("HH:mm"))
-    val end = LocalTime.parse(endTime, DateTimeFormatter.ofPattern("HH:mm"))
-    return ChronoUnit.MINUTES.between(start, end)
-}
-fun calculateChargingTime(batteryCapacity: Int, chargingPower: Int): Int {
-    val chargeTimeMinutes = (batteryCapacity * 60.0) / chargingPower
-    return chargeTimeMinutes.toInt()
-}
-
-fun calculateTotalCost(timeReserved: Long, timeToCharge: Int, pricePerHour: Int): Double {
-    val hoursReserved = timeReserved / 60.0
-    val hoursToCharge = timeToCharge / 60.0
-    val billedHours = min(hoursReserved, hoursToCharge)
-    val totalCost = billedHours * pricePerHour
-    return totalCost
-}
-fun Double.format(digits: Int): String {
-    return String.format("%.${digits}f", this)
 }
 
 @Composable
-fun ReservationCard(reservation: Reservation, chargingTime: Int, totalCost: Double){
+fun ReservationCard(reservation: Reservation, pricePerHour: Int){
     Card(modifier = Modifier
         .padding(8.dp)
         .fillMaxWidth(),
@@ -158,11 +160,7 @@ fun ReservationCard(reservation: Reservation, chargingTime: Int, totalCost: Doub
             Text(text = "Time: "+reservation.StartChargeTime+"-"+reservation.EndChargeTime)
             Spacer(modifier = Modifier.height(5.dp))
             //pret
-            Text(text = "Price per hour: "+reservation.totalCost.toString()+" lei")
-            //cat se incarca 0-100%
-            //Text(text = "Charging time from 0% to 100%: $chargingTime")
-            //suma
-            //Text(text = "Total cost: ${totalCost.format(2)} lei")
+            Text(text = "Price per hour: $pricePerHour lei")
         }
     }
 }
@@ -179,8 +177,8 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
     val newReservation by remember { mutableStateOf(Reservation()) }
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
     val notification = remember{ mutableStateOf("") }
-    var chargingTime by remember { mutableIntStateOf(0) }
-    var totalCost by remember { mutableDoubleStateOf(0.0)}
+    var pricePerHour by remember { mutableIntStateOf(0) }
+    val totalCost by remember { mutableDoubleStateOf(0.0)}
     if(notification.value.isNotEmpty()){
         Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
         notification.value = " "
@@ -215,7 +213,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                 items(reservations.filter { reservations ->
                     reservations.idOfUser.toString() == sharedViewModel.user_id.value
                 }) { reservation ->
-                    ReservationCard(reservation = reservation, chargingTime = chargingTime, totalCost = totalCost)
+                    ReservationCard(reservation = reservation, pricePerHour = pricePerHour)
                 }
             }
         }
@@ -295,31 +293,20 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                         if (validationResult == "Valid") {
                                             if (overlapCount == 0) {
                                                 delay(500)
-                                                val timeDifference = calculateTimeDifference(startChargeTime, endChargeTime)
                                                 val car = sharedViewModel.user_id.value?.let { id ->
                                                     carRepository.getCarByOwnerId(id.toInt()).firstOrNull()
                                                 }
                                                 delay(500)
                                                 if (car != null) {
-                                                    chargingTime = calculateChargingTime(car.batteryCapacity, chargingStation.chargingPower_kW)
-
-                                                    Log.d("baterie", car.batteryCapacity.toString())
-                                                    Log.d("Charging Power", chargingStation.chargingPower_kW.toString())
                                                     delay(500)
-                                                    totalCost = calculateTotalCost(timeDifference, chargingTime, chargingStation.pricePerHour)
-
-                                                    Log.d("timeDifference", timeDifference.toString())
-                                                    Log.d("chargingTime", chargingTime.toString())
-                                                    Log.d("pricePerHour", chargingStation.pricePerHour.toString())
-                                                    Log.d("totalCost", totalCost.toString())
 
                                                     newReservation.nameOfChargingStation = nameChargingStation
                                                     newReservation.idOfUser = idUser.toInt()
                                                     newReservation.date = date
                                                     newReservation.StartChargeTime = startChargeTime
                                                     newReservation.EndChargeTime = endChargeTime
-                                                    newReservation.totalCost = totalCost.toInt()
-
+                                                    newReservation.totalCost = totalCost
+                                                    pricePerHour = chargingStationRepository.getChargingStationByName(nameChargingStation).firstOrNull()?.pricePerHour ?: 0
                                                     reservationRepository.insertReservation(newReservation)
                                                     withContext(Dispatchers.Main) {
                                                         notification.value = "Reservation created successfully."
@@ -407,7 +394,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
         var date by remember { mutableStateOf("") }
         var startChargeTime by remember { mutableStateOf("") }
         var endChargeTime by remember { mutableStateOf("") }
-        var totalCost by remember { mutableStateOf(0.0) }
+        var totalCost by remember { mutableDoubleStateOf(0.0) }
 
         val reservationRepository = OfflineReservationRepository(
             reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
@@ -426,7 +413,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
             reservationEdit.date = ""
             reservationEdit.StartChargeTime = ""
             reservationEdit.EndChargeTime = ""
-            reservationEdit.totalCost = 0
+            reservationEdit.totalCost = 0.0
 
             if (id.isNotEmpty()) {
                 delay(500)
@@ -445,7 +432,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                     date = it.date
                     startChargeTime = it.StartChargeTime
                     endChargeTime = it.EndChargeTime
-                    totalCost = it.totalCost.toDouble()
+                    totalCost = it.totalCost
                 }
                 delay(500)
             }
@@ -500,7 +487,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                             reservationEdit.date = ""
                             reservationEdit.StartChargeTime = ""
                             reservationEdit.EndChargeTime = ""
-                            reservationEdit.totalCost = 0
+                            reservationEdit.totalCost = 0.0
                             showDialogEdit.value = false
                         }) {
                             Text("Cancel")
@@ -518,31 +505,17 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                         if (validationResult == "Valid") {
                                             if (overlapCount == 0) {
                                                 delay(500)
-                                                val timeDifference = calculateTimeDifference(startChargeTime, endChargeTime)
                                                 val car = sharedViewModel.user_id.value?.let { id ->
                                                     carRepository.getCarByOwnerId(id.toInt()).firstOrNull()
                                                 }
                                                 delay(500)
                                                 if (car != null) {
-                                                    chargingTime = calculateChargingTime(car.batteryCapacity, chargingStation.chargingPower_kW)
-
-                                                    Log.d("battery", car.batteryCapacity.toString())
-                                                    Log.d("Charging Power", chargingStation.chargingPower_kW.toString())
-                                                    delay(500)
-                                                    totalCost = calculateTotalCost(timeDifference, chargingTime, chargingStation.pricePerHour)
-
-                                                    Log.d("timeDifference", timeDifference.toString())
-                                                    Log.d("chargingTime", chargingTime.toString())
-                                                    Log.d("pricePerHour", chargingStation.pricePerHour.toString())
-                                                    Log.d("totalCost", totalCost.toString())
-
                                                     reservationEdit.nameOfChargingStation = nameOfChargingStation
                                                     reservationEdit.idOfUser = idOfUser.toInt()
                                                     reservationEdit.date = date
                                                     reservationEdit.StartChargeTime = startChargeTime
                                                     reservationEdit.EndChargeTime = endChargeTime
-                                                    reservationEdit.totalCost = totalCost.toInt()
-
+                                                    reservationEdit.totalCost = totalCost
                                                     reservationRepository.updateReservationDetails(
                                                         reservationEdit.idReservation,
                                                         reservationEdit.date,

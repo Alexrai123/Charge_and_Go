@@ -13,7 +13,7 @@ import com.example.licenta_copie.Database.Entity.ChargingStation
 import com.example.licenta_copie.Database.Entity.Reservation
 import com.example.licenta_copie.Database.Entity.User
 
-@Database(entities = [User::class, Car::class, ChargingStation::class, Reservation::class], version = 7, exportSchema = false)
+@Database(entities = [User::class, Car::class, ChargingStation::class, Reservation::class], version = 8, exportSchema = false)
 abstract class AppDatabase : RoomDatabase() {
     abstract fun userDao(): UserDao
     abstract fun carDao(): CarDao
