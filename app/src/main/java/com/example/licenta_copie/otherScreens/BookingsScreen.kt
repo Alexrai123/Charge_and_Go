@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -44,6 +45,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
@@ -136,34 +138,33 @@ fun submitReservation(date: String, startTime: String, endTime: String): String 
 }
 
 @Composable
-fun ReservationCard(reservation: Reservation, pricePerHour: Int){
-    Card(modifier = Modifier
-        .padding(8.dp)
-        .fillMaxWidth(),
+fun ReservationCard(reservation: Reservation, pricePerHour: Int) {
+    Card(
+        modifier = Modifier
+            .padding(8.dp)
+            .fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
             containerColor = Color(0xFFE0E0E0),
-            contentColor = Color(0xFF000000)),
+            contentColor = Color(0xFF000000)
+        ),
         border = BorderStroke(1.dp, Color.Black)
-    ){
-        Column(modifier = Modifier.padding(5.dp)){
-            //id rezervare
-            Text(text = "Reservation ID: "+reservation.idReservation.toString())
+    ) {
+        Column(modifier = Modifier.padding(5.dp)) {
+            // Reservation details
+            Text(text = "Reservation ID: ${reservation.idReservation}")
             Spacer(modifier = Modifier.height(5.dp))
-            //id statie incarcare
-            Text(text = "Charging Station ID: "+reservation.nameOfChargingStation)
+            Text(text = "Charging Station ID: ${reservation.nameOfChargingStation}")
             Spacer(modifier = Modifier.height(5.dp))
-            //data
-            Text(text = "Date: "+reservation.date)
+            Text(text = "Date: ${reservation.date}")
             Spacer(modifier = Modifier.height(5.dp))
-            //startCh-endCh
-            Text(text = "Time: "+reservation.StartChargeTime+"-"+reservation.EndChargeTime)
+            Text(text = "Time: ${reservation.StartChargeTime}-${reservation.EndChargeTime}")
             Spacer(modifier = Modifier.height(5.dp))
-            //pret
-            Text(text = "Price per hour: $pricePerHour lei")
+            //Text(text = "Price per hour: $pricePerHour lei")
         }
     }
 }
+
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -183,7 +184,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
         Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
         notification.value = " "
     }
-    Scaffold(//afiseaza lista doar pt user-ul ala
+    Scaffold(
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
             FloatingActionButton(
@@ -204,15 +205,20 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                 }
             )
         },
-        content = {contentPading ->
+        content = {
             LazyColumn(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(contentPading)
+                    .padding(bottom = 80.dp, top = 60.dp)
             ) {
-                items(reservations.filter { reservations ->
-                    reservations.idOfUser.toString() == sharedViewModel.user_id.value
-                }) { reservation ->
+                items(reservations.filter { it.idOfUser.toString() == sharedViewModel.user_id.value }) { reservation ->
+                    val chargingStationRepository = OfflineChargingStationRepository(
+                        chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
+                    )
+                    LaunchedEffect(reservation.nameOfChargingStation) {
+                        val chargingStation = chargingStationRepository.getChargingStationByName(reservation.nameOfChargingStation).firstOrNull()
+                        pricePerHour = chargingStation?.pricePerHour ?: 0
+                    }
                     ReservationCard(reservation = reservation, pricePerHour = pricePerHour)
                 }
             }
@@ -306,6 +312,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                                     newReservation.StartChargeTime = startChargeTime
                                                     newReservation.EndChargeTime = endChargeTime
                                                     newReservation.totalCost = totalCost
+                                                    delay(1000)
                                                     pricePerHour = chargingStationRepository.getChargingStationByName(nameChargingStation).firstOrNull()?.pricePerHour ?: 0
                                                     reservationRepository.insertReservation(newReservation)
                                                     withContext(Dispatchers.Main) {
@@ -366,7 +373,8 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                 verticalArrangement = Arrangement.Center) {
                 TextField(value = idDelete,
                     onValueChange = { idDelete = it },
-                    label = { Text(text = "ID") }
+                    label = { Text(text = "ID") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
                 )
                 Row(horizontalArrangement = Arrangement.SpaceEvenly){
                     Button(onClick = {
