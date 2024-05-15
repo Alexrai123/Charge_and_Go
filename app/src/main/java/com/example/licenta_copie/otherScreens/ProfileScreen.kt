@@ -81,6 +81,8 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
     var username by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var phoneNumber by remember { mutableStateOf("") }
+    val showDialogEditEmail = remember { mutableStateOf(false) }
+    val showDialogEditPhoneNumber = remember { mutableStateOf(false) }
     val showDialogEditPassword = remember { mutableStateOf(false) }
     //car
     var carId by remember { mutableStateOf("") }
@@ -186,7 +188,12 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                             disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
                             focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
                             unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-                        )
+                        ),
+                        trailingIcon = {
+                            IconButton(onClick = { showDialogEditEmail.value = true }) {
+                                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Email")
+                            }
+                        }
                     )
                 }
                 Spacer(modifier = Modifier.height(15.dp))
@@ -226,7 +233,12 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                             disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
                             focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
                             unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-                        )
+                        ),
+                        trailingIcon = {
+                            IconButton(onClick = { showDialogEditPhoneNumber.value = true }) {
+                                Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Phone Number")
+                            }
+                        }
                     )
                 }
                 Spacer(modifier = Modifier.height(15.dp))
@@ -515,6 +527,86 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                         ) {
                             Text("Submit")
                         }
+                    }
+                }
+            }
+        }
+    }
+    if(showDialogEditEmail.value){
+        var newEmail by remember { mutableStateOf("") }
+        Dialog(onDismissRequest = { showDialogEditEmail.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )){
+            Column(modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center) {
+                TextField(value = newEmail,
+                    onValueChange = { newEmail = it },
+                    label = { Text(text = "New Email") }
+                )
+                Row(horizontalArrangement = Arrangement.SpaceEvenly){
+                    Button(
+                        onClick = {
+                            newEmail = ""
+                            showDialogEditEmail.value = false},
+                        colors = ButtonDefaults.buttonColors(Color.Red)) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                sharedViewModel.user_email.value = newEmail
+                                userRepository.updateEmail(newEmail, phoneNumber, password)
+                                withContext(Dispatchers.Main) {
+                                    notification.value = "Email updated successfully"
+                                    showDialogEditEmail.value = false
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(Color.Blue)){
+                        Text(text = "Change Email")
+                    }
+                }
+            }
+        }
+    }
+    if(showDialogEditPhoneNumber.value){
+        var newPhoneNumber by remember { mutableStateOf("") }
+        Dialog(onDismissRequest = { showDialogEditPhoneNumber.value = false },
+            properties = DialogProperties(
+                dismissOnClickOutside = false,
+                dismissOnBackPress = false
+            )){
+            Column(modifier = Modifier.fillMaxSize(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center) {
+                TextField(value = newPhoneNumber,
+                    onValueChange = { newPhoneNumber = it },
+                    label = { Text(text = "New Phone Number") }
+                )
+                Row(horizontalArrangement = Arrangement.SpaceEvenly){
+                    Button(
+                        onClick = {
+                            newPhoneNumber = ""
+                            showDialogEditPhoneNumber.value = false},
+                        colors = ButtonDefaults.buttonColors(Color.Red)) {
+                        Text("Cancel")
+                    }
+                    Button(
+                        onClick = {
+                            CoroutineScope(Dispatchers.Main).launch {
+                                phoneNumber = newPhoneNumber
+                                userRepository.updatePhoneNumber(email, newPhoneNumber, password)
+                                withContext(Dispatchers.Main) {
+                                    notification.value = "Phone number updated successfully"
+                                    showDialogEditPhoneNumber.value = false
+                                }
+                            }
+                        },
+                        colors = ButtonDefaults.buttonColors(Color.Blue)){
+                        Text(text = "Change Phone Number")
                     }
                 }
             }

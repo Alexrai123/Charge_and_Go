@@ -7,6 +7,8 @@ interface UserRepository {
     fun getPasswordById(id: Int): Flow<String?>
     fun getPasswordByEmail(email: String): Flow<String?>
     suspend fun updatePassword(email: String, phoneNumber: String, newPassword: String)
+    suspend fun updateEmail(newEmail: String, phoneNumber: String, password: String)
+    suspend fun updatePhoneNumber(email: String, newPhoneNumber: String, password: String)
     fun getAllUsersStream(): Flow<List<User>>
     fun getUserStream(id: Int): Flow<User?>
     fun getUserByEmailAndPassword(email: String, password: String): Flow<User?>
