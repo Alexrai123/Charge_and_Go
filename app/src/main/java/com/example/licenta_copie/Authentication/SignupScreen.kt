@@ -54,7 +54,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 fun validateEmail(email: String): Boolean {
-    val emailRegex = "^[\\w]{1,20}@(gmail\\.com|yahoo\\.com|student\\.usv\\.ro|hotmail\\.com|outlook\\.com)$".toRegex()
+    val emailRegex = "^[\\w]{1,40}@(gmail\\.com|yahoo\\.com|student\\.usv\\.ro|hotmail\\.com|outlook\\.com)$".toRegex()
     return email.matches(emailRegex)
 }
 fun validatePassword(password: String): Boolean {
