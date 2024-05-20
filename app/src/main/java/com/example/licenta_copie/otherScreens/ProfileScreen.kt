@@ -62,7 +62,10 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-
+fun validateEmail(email: String): Boolean {
+    val emailRegex = "^[\\w]{1,40}@(gmail\\.com|yahoo\\.com|student\\.usv\\.ro|hotmail\\.com|outlook\\.com)$".toRegex()
+    return email.matches(emailRegex)
+}
 fun convertStringToStars(input: String): String {
     val convertedString = StringBuilder()
     for (i in input.indices) {
@@ -197,26 +200,6 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                     )
                 }
                 Spacer(modifier = Modifier.height(15.dp))
-//                Row(
-//                    modifier = Modifier
-//                        .fillMaxWidth()
-//                        .padding(start = 4.dp, end = 4.dp),
-//                    verticalAlignment = Alignment.CenterVertically
-//                ) {
-//                    Text(text = "Username: ", modifier = Modifier.width(100.dp))
-//                    TextField(
-//                        value = username,
-//                        onValueChange = { },
-//                        colors = TextFieldDefaults.colors(
-//                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-//                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-//                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-//                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
-//                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-//                        )
-//                    )
-//                }
-//                Spacer(modifier = Modifier.height(15.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -556,12 +539,20 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                     }
                     Button(
                         onClick = {
-                            CoroutineScope(Dispatchers.Main).launch {
-                                sharedViewModel.user_email.value = newEmail
-                                userRepository.updateEmail(newEmail, phoneNumber, password)
-                                withContext(Dispatchers.Main) {
-                                    notification.value = "Email updated successfully"
-                                    showDialogEditEmail.value = false
+                            if(validateEmail(newEmail) == true){
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    sharedViewModel.user_email.value = newEmail
+                                    userRepository.updateEmail(newEmail, phoneNumber, password)
+                                    withContext(Dispatchers.Main) {
+                                        notification.value = "Email updated successfully"
+                                        showDialogEditEmail.value = false
+                                    }
+                                }
+                            } else {
+                                CoroutineScope(Dispatchers.IO).launch {
+                                    withContext(Dispatchers.Main) {
+                                        notification.value = "Invalid email format"
+                                    }
                                 }
                             }
                         },
