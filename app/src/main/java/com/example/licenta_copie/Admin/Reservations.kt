@@ -66,10 +66,10 @@ fun ReservationCard(reservation: Reservation){
     ){
         Column(modifier = Modifier.padding(5.dp)){
             //id
-            Text(text = "ID: "+reservation.idReservation.toString())
+            Text(text = "Reservation ID: "+reservation.idReservation.toString())
             Spacer(modifier = Modifier.height(5.dp))
-            //id statie incarcare
-            Text(text = "Charging Station ID: "+reservation.idReservation.toString())
+            //nume statie incarcare
+            Text(text = "Name of Charging Station: "+reservation.nameOfChargingStation)
             Spacer(modifier = Modifier.height(5.dp))
             //id user
             Text(text = "User ID: "+reservation.idOfUser.toString())

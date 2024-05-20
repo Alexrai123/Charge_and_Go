@@ -123,7 +123,7 @@ fun isValidTimeInterval(startTime: String, endTime: String): Boolean {
 
 fun submitReservation(date: String, startTime: String, endTime: String): String {
     if (!isValidDate(date)) {
-        return "Invalid date format. Please use 'dd-MM-yyyy'."
+        return "Please use 'dd-MM-yyyy' or choose a valid date."
     }
     if (!isValidTime(startTime) || !isValidTime(endTime)) {
         return "Invalid time format. Please use 'HH:mm'."
