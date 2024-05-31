@@ -12,6 +12,12 @@ import androidx.room.PrimaryKey
         onDelete = ForeignKey.CASCADE,
         onUpdate = ForeignKey.CASCADE),
     ForeignKey(
+        entity = Car::class,
+        parentColumns = ["id"],
+        childColumns = ["idOfCar"],
+        onDelete = ForeignKey.CASCADE,
+        onUpdate = ForeignKey.CASCADE),
+    ForeignKey(
         entity = User::class,
         parentColumns = ["id"],
         childColumns = ["idOfUser"],
@@ -23,6 +29,7 @@ data class Reservation(
     var idReservation: Int = 0,
     var nameOfChargingStation: String = "",
     var idOfUser: Int = -1,
+    var idOfCar: Int = -1,
     var date: String = "",
     var StartChargeTime: String = "",
     var EndChargeTime: String = "",

@@ -76,7 +76,6 @@ fun isValidTime(time: String): Boolean {
         false
     }
 }
-
 fun isValidDate(date: String): Boolean {
     return try {
         val parsedDate = LocalDate.parse(date, DateTimeFormatter.ofPattern("dd-MM-yyyy"))
@@ -87,7 +86,6 @@ fun isValidDate(date: String): Boolean {
         false
     }
 }
-
 fun isReservationCurrent(reservationDate: String, reservationTime: String): Boolean {
     return try {
         val currentDate = LocalDate.now()
@@ -110,7 +108,6 @@ fun isReservationCurrent(reservationDate: String, reservationTime: String): Bool
         false
     }
 }
-
 fun isValidTimeInterval(startTime: String, endTime: String): Boolean {
     return try {
         val start = LocalTime.parse(startTime, DateTimeFormatter.ofPattern("HH:mm"))
@@ -120,7 +117,11 @@ fun isValidTimeInterval(startTime: String, endTime: String): Boolean {
         false
     }
 }
-
+//logare cu google sau facebook
+//trimite email de confirmare -(serviciu backend) nu prea, prin nr de telefon nici atat
+//pt  mai multe masini la profil, per user   facut
+//estimare cost +
+//marcheaza rezervarile curente, si alea inactive +
 fun submitReservation(date: String, startTime: String, endTime: String): String {
     if (!isValidDate(date)) {
         return "Please use 'dd-MM-yyyy' or choose a valid date."
@@ -136,35 +137,61 @@ fun submitReservation(date: String, startTime: String, endTime: String): String 
     }
     return "Valid"
 }
+fun isFutureReservation(date: String, startTime: String): Boolean {
+    return try {
+        val formatterDate = DateTimeFormatter.ofPattern("dd-MM-yyyy")
+        val formatterTime = DateTimeFormatter.ofPattern("HH:mm")
 
+        val reservationDate = LocalDate.parse(date, formatterDate)
+        val reservationStartTime = LocalTime.parse(startTime, formatterTime)
+
+        val currentDate = LocalDate.now()
+        val currentTime = LocalTime.now()
+
+        if (reservationDate.isAfter(currentDate)) {
+            true
+        } else if (reservationDate.isEqual(currentDate)) {
+            reservationStartTime.isAfter(currentTime)
+        } else {
+            false
+        }
+    } catch (e: DateTimeParseException) {
+        false
+    }
+}
 @Composable
-fun ReservationCard(reservation: Reservation, pricePerHour: Int) {
+fun ReservationCard(reservation: Reservation) {
+    val cardColor = if (isFutureReservation(reservation.date, reservation.StartChargeTime)) {
+        Color(0xFFD0F0C0) // Light green
+    } else {
+        Color(0xFFFFC0C0) // Light red
+    }
     Card(
         modifier = Modifier
             .padding(8.dp)
             .fillMaxWidth(),
         shape = RoundedCornerShape(8.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color(0xFFE0E0E0),
+            containerColor = cardColor,
             contentColor = Color(0xFF000000)
         ),
         border = BorderStroke(1.dp, Color.Black)
     ) {
         Column(modifier = Modifier.padding(5.dp)) {
-            // Reservation details
             Text(text = "Reservation ID: ${reservation.idReservation}")
             Spacer(modifier = Modifier.height(5.dp))
-            Text(text = "Charging Station ID: ${reservation.nameOfChargingStation}")
+            Text(text = "Charging Station: ${reservation.nameOfChargingStation}")
+            Spacer(modifier = Modifier.height(5.dp))
+            Text(text = "ID Of Car: ${reservation.idOfCar}")
             Spacer(modifier = Modifier.height(5.dp))
             Text(text = "Date: ${reservation.date}")
             Spacer(modifier = Modifier.height(5.dp))
-            Text(text = "Time: ${reservation.StartChargeTime}-${reservation.EndChargeTime}")
+            Text(text = "Time: ${reservation.StartChargeTime} - ${reservation.EndChargeTime}")
             Spacer(modifier = Modifier.height(5.dp))
-            //Text(text = "Price per hour: $pricePerHour lei")
+            // Optionally include other details like price, if needed
         }
     }
 }
-
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
@@ -172,6 +199,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
              sharedViewModel: SharedViewModel, showDialogDelete: MutableState<Boolean>, showDialogEdit: MutableState<Boolean>) {
     var nameChargingStation by remember { mutableStateOf("") }
     var idUser by remember { mutableStateOf("") }
+    var idCar by remember { mutableStateOf("") }
     var date by remember { mutableStateOf("") }
     var startChargeTime by remember { mutableStateOf("") }
     var endChargeTime by remember { mutableStateOf("") }
@@ -194,7 +222,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
             )
         },
         topBar = {
-            TopAppBar(title = { Text(text = "Reservations") },
+            TopAppBar(title = { Text(text = "") },
                 actions = {
                     IconButton(onClick = { showDialogEdit.value = true }) {
                         Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit reservation")
@@ -219,7 +247,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         val chargingStation = chargingStationRepository.getChargingStationByName(reservation.nameOfChargingStation).firstOrNull()
                         pricePerHour = chargingStation?.pricePerHour ?: 0
                     }
-                    ReservationCard(reservation = reservation, pricePerHour = pricePerHour)
+                    ReservationCard(reservation = reservation)
                 }
             }
         }
@@ -246,11 +274,10 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                 .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
-                Column(modifier = Modifier.padding(16.dp)) {
+                Column(modifier = Modifier.padding(5.dp)) {
                     Text(
                         text = "Add Reservation",
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
                     TextField(//id of charging station
                         value = nameChargingStation,
                         onValueChange = {
@@ -258,7 +285,13 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         },
                         label = { Text("Name of Charging Station") }
                     )
-                        //data
+                    //id car
+                    TextField(
+                        value = idCar,
+                        onValueChange = { idCar = it },
+                        label = { Text("ID Of Car") }
+                    )
+                    //data
                     TextField(
                         value = date,
                         onValueChange = {date = it},
@@ -275,9 +308,11 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         onValueChange = {endChargeTime = it},
                         label = { Text("End Time") }
                     )
+                    Spacer(modifier = Modifier.height(15.dp))
                     Row(horizontalArrangement = Arrangement.SpaceEvenly) {
                         Button(onClick = {
                                 nameChargingStation = ""
+                                idCar = ""
                                 startChargeTime = ""
                                 endChargeTime = ""
                                 date = ""
@@ -291,47 +326,59 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                 val exists = chargingStationRepository.existsByName(nameChargingStation)
                                 if (exists) {
                                     val chargingStation = chargingStationRepository.getChargingStationByName(nameChargingStation).firstOrNull()
+                                    val car = carRepository.getCarById(idCar.toInt()).firstOrNull()
                                     if (chargingStation != null) {
-                                        val overlapCount = reservationRepository.checkForOverlappingReservations(
-                                            nameChargingStation, startChargeTime, endChargeTime, date
-                                        )
-                                        val validationResult = submitReservation(date, startChargeTime, endChargeTime)
-                                        if (validationResult == "Valid") {
-                                            if (overlapCount == 0) {
-                                                delay(500)
-                                                val car = sharedViewModel.user_id.value?.let { id ->
-                                                    carRepository.getCarByOwnerId(id.toInt()).firstOrNull()
-                                                }
-                                                delay(500)
-                                                if (car != null) {
-                                                    delay(500)
-
-                                                    newReservation.nameOfChargingStation = nameChargingStation
+                                        if(car != null) {
+                                            val overlapCount =
+                                                reservationRepository.checkForOverlappingReservations(
+                                                    nameChargingStation,
+                                                    startChargeTime,
+                                                    endChargeTime,
+                                                    date
+                                                )
+                                            val validationResult = submitReservation(
+                                                date,
+                                                startChargeTime,
+                                                endChargeTime
+                                            )
+                                            if (validationResult == "Valid") {
+                                                if (overlapCount == 0) {
+                                                    delay(1000)
+                                                    newReservation.nameOfChargingStation =
+                                                        nameChargingStation
                                                     newReservation.idOfUser = idUser.toInt()
+                                                    newReservation.idOfCar = idCar.toInt()
                                                     newReservation.date = date
                                                     newReservation.StartChargeTime = startChargeTime
                                                     newReservation.EndChargeTime = endChargeTime
                                                     newReservation.totalCost = totalCost
                                                     delay(1000)
-                                                    pricePerHour = chargingStationRepository.getChargingStationByName(nameChargingStation).firstOrNull()?.pricePerHour ?: 0
-                                                    reservationRepository.insertReservation(newReservation)
+                                                    pricePerHour =
+                                                        chargingStationRepository.getChargingStationByName(
+                                                            nameChargingStation
+                                                        ).firstOrNull()?.pricePerHour ?: 0
+                                                    reservationRepository.insertReservation(
+                                                        newReservation
+                                                    )
                                                     withContext(Dispatchers.Main) {
-                                                        notification.value = "Reservation created successfully."
+                                                        notification.value =
+                                                            "Reservation created successfully."
                                                         showDialog.value = false
                                                     }
                                                 } else {
                                                     withContext(Dispatchers.Main) {
-                                                        notification.value = "Failed to fetch car details."
+                                                        notification.value =
+                                                            "Time slot not available. Please choose another time or another day"
                                                     }
                                                 }
                                             } else {
                                                 withContext(Dispatchers.Main) {
-                                                    notification.value = "Time slot not available. Please choose another time or another day"
+                                                    notification.value = validationResult
                                                 }
                                             }
                                         } else {
                                             withContext(Dispatchers.Main) {
-                                                notification.value = validationResult
+                                                notification.value = "Car ID does not exist. Please enter a valid ID."
                                             }
                                         }
                                     } else {
@@ -399,9 +446,6 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
         var id by remember { mutableStateOf("") }
         var nameOfChargingStation by remember { mutableStateOf("") }
         var idOfUser by remember { mutableStateOf("") }
-        var date by remember { mutableStateOf("") }
-        var startChargeTime by remember { mutableStateOf("") }
-        var endChargeTime by remember { mutableStateOf("") }
         var totalCost by remember { mutableDoubleStateOf(0.0) }
 
         val reservationRepository = OfflineReservationRepository(
@@ -418,6 +462,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
         LaunchedEffect(id) {
             reservationEdit.nameOfChargingStation = ""
             reservationEdit.idOfUser = 0
+            reservationEdit.idOfCar = 0
             reservationEdit.date = ""
             reservationEdit.StartChargeTime = ""
             reservationEdit.EndChargeTime = ""
@@ -430,6 +475,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                     reservationEdit.idReservation = it.idReservation
                     reservationEdit.nameOfChargingStation = it.nameOfChargingStation
                     reservationEdit.idOfUser = it.idOfUser
+                    reservationEdit.idOfCar = it.idOfCar
                     reservationEdit.date = it.date
                     reservationEdit.StartChargeTime = it.StartChargeTime
                     reservationEdit.EndChargeTime = it.EndChargeTime
@@ -437,6 +483,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
 
                     nameOfChargingStation = it.nameOfChargingStation
                     idOfUser = it.idOfUser.toString()
+                    idCar = it.idOfCar.toString()
                     date = it.date
                     startChargeTime = it.StartChargeTime
                     endChargeTime = it.EndChargeTime
@@ -445,7 +492,6 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                 delay(500)
             }
         }
-
         Dialog(onDismissRequest = { showDialogEdit.value = false },
             properties = DialogProperties(
                 dismissOnClickOutside = false,
@@ -473,6 +519,11 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         label = { Text("Name of Charging Station") }
                     )
                     TextField(
+                        value = idCar,
+                        onValueChange = { idCar = it },
+                        label = { Text("ID Of Car") }
+                    )
+                    TextField(
                         value = date,
                         onValueChange = { date = it },
                         label = { Text("Date") }
@@ -492,6 +543,7 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         Button(onClick = {
                             reservationEdit.nameOfChargingStation = ""
                             reservationEdit.idOfUser = 0
+                            reservationEdit.idOfCar = 0
                             reservationEdit.date = ""
                             reservationEdit.StartChargeTime = ""
                             reservationEdit.EndChargeTime = ""

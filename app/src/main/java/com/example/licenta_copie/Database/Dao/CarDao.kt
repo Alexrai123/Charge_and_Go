@@ -15,6 +15,10 @@ interface CarDao {
     fun getAllCars(): Flow<List<Car>>
     @Query("SELECT * from Car WHERE ownerId = :ownerId")
     fun getCarByOwnerId(ownerId: Int): Flow<Car?>
+    @Query("SELECT * from Car WHERE ownerId = :ownerId")
+    fun getCarsByOwnerId(ownerId: Int): Flow<List<Car>>
+    @Query("SELECT EXISTS(SELECT 1 FROM Car WHERE id = :carId)")
+    suspend fun existsById(carId: Int): Boolean
     @Query("SELECT COUNT(*) FROM Car WHERE ownerId = :ownerId")
     fun countCarsByOwnerId(ownerId: Int): Int
     @Query("SELECT batteryCapacity FROM Car WHERE id = :id")
