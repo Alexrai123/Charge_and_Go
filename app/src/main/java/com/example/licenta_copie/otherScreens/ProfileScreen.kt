@@ -11,17 +11,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
-import androidx.compose.material.icons.filled.AddCircle
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -32,7 +28,6 @@ import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -62,6 +57,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+
 fun validateEmail(email: String): Boolean {
     val emailRegex = "^[\\w]{1,40}@(gmail\\.com|yahoo\\.com|student\\.usv\\.ro|hotmail\\.com|outlook\\.com)$".toRegex()
     return email.matches(emailRegex)
@@ -76,8 +72,7 @@ fun convertStringToStars(input: String): String {
 @OptIn(ExperimentalMaterial3Api::class)
 @SuppressLint("UnusedMaterial3ScaffoldPaddingParameter")
 @Composable
-fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedViewModel, onLogout: () -> Unit,
-            showDialogEditCar: MutableState<Boolean>) {
+fun Profile(sharedViewModel: SharedViewModel, onLogout: () -> Unit) {
     //user
     var id by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
@@ -134,27 +129,19 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
     }
     Scaffold(
         topBar = {
-          TopAppBar(title = { Text(text = "Profile") },
+          TopAppBar(title = { Text(text = "") },
               actions = {
-                  IconButton(onClick = { showDialogEditCar.value = true }) {
-                      Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit Car")
-                  }
                   IconButton(onClick = { onLogout() }) {
                       Icon(imageVector = Icons.AutoMirrored.Filled.ExitToApp, contentDescription = "Logout")
                   }
               })
         },
-        floatingActionButton = {
-            FloatingActionButton(
-                modifier = Modifier.padding(bottom = 75.dp),
-                onClick = { showDialogAddCar.value = true },
-                content = { Icon(Icons.Default.AddCircle, contentDescription = "Add Car") }
-            )
-        },
         content = {contentPadding ->
             Column(modifier = Modifier.padding(contentPadding)) {
+                Spacer(modifier = Modifier.height(85.dp))
                 Text(text = "User Information", modifier = Modifier.fillMaxWidth(),textAlign = TextAlign.Center,
                     fontWeight = FontWeight.ExtraBold, fontSize = 25.sp)
+                Spacer(modifier = Modifier.height(95.dp))
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
@@ -249,272 +236,10 @@ fun Profile(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedView
                         }
                     )
                 }
-                Spacer(modifier = Modifier.height(15.dp))
-                Text(text = "Car Information", modifier = Modifier.fillMaxWidth(),textAlign = TextAlign.Center,
-                    fontWeight = FontWeight.ExtraBold, fontSize = 25.sp)
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, end = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "Car ID: ", modifier = Modifier.width(100.dp))
-                    TextField(
-                        value = carId,
-                        onValueChange = { },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.height(15.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, end = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "Model: ", modifier = Modifier.width(100.dp))
-                    TextField(
-                        value = model,
-                        onValueChange = { },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.height(15.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, end = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "License Plate: ", modifier = Modifier.width(100.dp))
-                    TextField(
-                        value = licensePlate,
-                        onValueChange = { },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-                        )
-                    )
-                }
-                Spacer(modifier = Modifier.height(15.dp))
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 4.dp, end = 4.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Text(text = "Battery Capacity: ", modifier = Modifier.width(100.dp))
-                    TextField(
-                        value = batteryCapacity,
-                        onValueChange = { },
-                        colors = TextFieldDefaults.colors(
-                            focusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            unfocusedContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            disabledContainerColor = MaterialTheme.colorScheme.textFieldContainer,
-                            focusedLabelColor = MaterialTheme.colorScheme.focusedTextFieldText,
-                            unfocusedLabelColor = MaterialTheme.colorScheme.unfocusedTextFieldText,
-                        )
-                    )
-                }
             }
         }
     )
-    if(showDialogAddCar.value) {
-        newCar.ownerId = id.toInt()
-        Dialog(onDismissRequest = { showDialogAddCar.value = false },
-            properties = DialogProperties(
-                dismissOnClickOutside = false,
-                dismissOnBackPress = false
-            )
-        ){
-            Card(modifier = Modifier
-                .fillMaxWidth()
-                .height(455.dp)
-                .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Column(modifier = Modifier.padding(16.dp)) {
-                    Text(
-                        text = "Add Car",
-                    )
-                    Spacer(modifier = Modifier.height(16.dp))
-                    TextField(//model
-                        value = model,
-                        onValueChange = { model = it },
-                        label = { Text("Model of Car") }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextField(//licensePlate
-                        value = licensePlate,
-                        onValueChange = { licensePlate = it },
-                        label = { Text("License plate number") }
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    TextField(//capacitate baterie
-                        value = batteryCapacity,
-                        onValueChange = { batteryCapacity = it },
-                        label = { Text("Battery Capacity") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-                    Row (horizontalArrangement = Arrangement.SpaceEvenly){
-                        Button(onClick = {
-                                model = ""
-                                licensePlate = ""
-                                batteryCapacity = ""
-                                showDialogAddCar.value = false
-                            }
-                        ) {
-                            Text("Cancel")
-                        }
-                        Button(modifier = Modifier.padding(start = 65.dp),
-                            onClick = {
-                            CoroutineScope(Dispatchers.IO).launch {
-                                if (carRepository.countCarsByOwnerId(newCar.ownerId) == 0){
-                                    newCar.model = model
-                                    newCar.licensePlate = licensePlate
-                                    newCar.batteryCapacity = batteryCapacity.toInt()
-                                    carRepository.insertCar(newCar)
-                                    showDialogAddCar.value = false
-                                }
-                                else notification.value = "Each user can own only 1 car!"
-                            }
-                        }
-                        ) {
-                            Text("Submit")
-                        }
-                    }
-                }
-            }
-        }
-    }
-    sharedViewModel.car_id.value = carId
     sharedViewModel.user_id.value = id
-    if(showDialogEditCar.value){
-        var idCar by remember { mutableStateOf("") }
-        var ownerIdCar by remember { mutableStateOf("") }
-        var modelCar by remember { mutableStateOf("") }
-        var licensePlateCar by remember { mutableStateOf("") }
-        var batteryCapacityCar by remember { mutableStateOf("") }
-        val carRepositoryCar = OfflineCarRepository(
-            carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
-        )
-        val carEdit by remember { mutableStateOf(Car()) }
-        idCar = sharedViewModel.car_id.value.toString()
-        ownerIdCar = sharedViewModel.user_id.value.toString()
-        LaunchedEffect(idCar, ownerIdCar) {
-            carEdit.model = ""
-            carEdit.licensePlate = ""
-            carEdit.batteryCapacity = 0
-            if(idCar.isNotEmpty()){
-                delay(500)
-                val car = carRepositoryCar.getCarById(idCar.toInt()).firstOrNull()
-                car?.let {
-                    carEdit.id = it.id
-                    carEdit.ownerId = it.ownerId
-                    carEdit.model = it.model
-                    carEdit.licensePlate = it.licensePlate
-                    carEdit.batteryCapacity = it.batteryCapacity
-
-                    idCar = it.id.toString()
-                    ownerIdCar = it.ownerId.toString()
-                    modelCar = it.model
-                    licensePlateCar = it.licensePlate
-                    batteryCapacityCar = it.batteryCapacity.toString()
-                }
-                delay(500)
-            }
-        }
-        Dialog(onDismissRequest = { showDialogEditCar.value = false },
-            properties = DialogProperties(
-                dismissOnClickOutside = false,
-                dismissOnBackPress = false
-            )) {
-            Card(modifier = Modifier
-                .fillMaxWidth()
-                .height(455.dp)
-                .padding(16.dp),
-                shape = RoundedCornerShape(16.dp),
-            ) {
-                Column(modifier = Modifier.padding(5.dp)) {
-                    Text(
-                        text = "Edit Car",
-                    )
-                    TextField(
-                        value = idCar,
-                        onValueChange = { },
-                        label = { Text("Id") }
-                    )
-                    TextField(
-                        value = ownerIdCar,
-                        onValueChange = { },
-                        label = { Text("Owner Id") }
-                    )
-                    TextField(
-                        value = modelCar,
-                        onValueChange = { modelCar = it },
-                        label = { Text("Model") }
-                    )
-                    TextField(
-                        value = licensePlateCar,
-                        onValueChange = { licensePlateCar = it },
-                        label = { Text("License Plate") }
-                    )
-                    TextField(
-                        value = batteryCapacityCar,
-                        onValueChange = { batteryCapacityCar = it },
-                        label = { Text("Battery Capacity") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-                    )
-                    Spacer(modifier = Modifier.height(5.dp))
-                    Row(horizontalArrangement = Arrangement.SpaceEvenly) {
-                        Button(onClick = {
-                            carEdit.ownerId = 0
-                            carEdit.model = ""
-                            carEdit.licensePlate = ""
-                            carEdit.batteryCapacity = 0
-                            showDialogEditCar.value = false
-                        }){
-                            Text("Cancel")
-                        }
-                        Button(modifier = Modifier.padding(start = 95.dp),
-                            onClick = {
-                                val batteryCapacityCheck = batteryCapacityCar.toDoubleOrNull()
-                                if (batteryCapacityCheck != null && batteryCapacityCheck == batteryCapacityCheck.toInt().toDouble()) {
-                                    CoroutineScope(Dispatchers.Main).launch {
-                                        carEdit.ownerId = ownerIdCar.toInt()
-                                        carEdit.model = modelCar
-                                        carEdit.licensePlate = licensePlateCar
-                                        carEdit.batteryCapacity = batteryCapacityCheck.toInt()
-                                        carRepositoryCar.updateCar(carEdit)
-                                        showDialogEditCar.value = false
-                                    }
-                                } else {
-                                    notification.value = "Battery Capacity must be an integer"
-                                }
-                            }
-                        ) {
-                            Text("Submit")
-                        }
-                    }
-                }
-            }
-        }
-    }
     if(showDialogEditEmail.value){
         var newEmail by remember { mutableStateOf("") }
         Dialog(onDismissRequest = { showDialogEditEmail.value = false },

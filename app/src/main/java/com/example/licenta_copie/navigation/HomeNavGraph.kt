@@ -2,6 +2,7 @@ package com.example.licenta_copie.navigation
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.runtime.Composable
@@ -32,6 +33,7 @@ import com.example.licenta_copie.ModelView.ReservationViewModel
 import com.example.licenta_copie.ModelView.SharedViewModel
 import com.example.licenta_copie.ModelView.UserViewModel
 import com.example.licenta_copie.otherScreens.Bookings
+import com.example.licenta_copie.otherScreens.CarsScreen
 import com.example.licenta_copie.otherScreens.MapScreen
 import com.example.licenta_copie.otherScreens.Profile
 
@@ -40,9 +42,18 @@ fun HomeNavGraph(navController: NavHostController, sharedViewModel: SharedViewMo
     NavHost(navController = navController, route = Graph.HOME, startDestination = BottomBarScreen.Profile.route){
         composable(route = BottomBarScreen.Profile.route){
             val showDialogAddCar = remember { mutableStateOf(false) }
-            val showDialogEditProfile = remember { mutableStateOf(false) }
             val showDialogEditCar = remember { mutableStateOf(false) }
-            Profile(showDialogAddCar, sharedViewModel, onLogout = { navController.navigate(AuthScreen.Login.route) }, showDialogEditCar)
+            Profile(sharedViewModel, onLogout = { navController.navigate(AuthScreen.Login.route) })
+        }
+        composable(route = BottomBarScreen.Cars.route){
+            val carRepository = OfflineCarRepository(
+                carDao = AppDatabase.getDatabase(LocalContext.current).carDao()
+            )
+            val carViewModel = CarViewModel(carRepository)
+            val showDialogAddCar = remember { mutableStateOf(false) }
+            val showDialogEditCar = remember { mutableStateOf(false) }
+            val showDialogDeleteCar = remember { mutableStateOf(false) }
+            CarsScreen(showDialogAddCar, sharedViewModel, showDialogEditCar, carViewModel, showDialogDeleteCar)
         }
         composable(route = BottomBarScreen.Map.route){
             val chargingStationRepository = OfflineChargingStationRepository(
@@ -140,4 +151,5 @@ sealed class BottomBarScreen (val route: String, val title: String, val icon: Im
     object Map: BottomBarScreen(route = "MapScreen", title = "MAP", icon = Icons.Default.Place)
     object Profile : BottomBarScreen(route = "ProfileScreen", title = "PROFILE", icon = Icons.Default.Person)
     object Bookings : BottomBarScreen(route = "BookingsScreen", title = "BOOKINGS", icon = Icons.Default.DateRange)
+    object Cars : BottomBarScreen(route = "CarsScreen", title = "CARS", icon = Icons.Default.Menu)
 }

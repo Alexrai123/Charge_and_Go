@@ -2,6 +2,7 @@ package com.example.licenta_copie.otherScreens
 
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Menu
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.ui.graphics.vector.ImageVector
@@ -25,5 +26,10 @@ sealed class BottomBarScreen(
         route = "ProfileScreen",
         title = "PROFILE",
         icon = Icons.Default.Person
+    )
+    object Cars : BottomBarScreen(
+        route = "CarsScreen",
+        title = "CARS",
+        icon = Icons.Default.Menu
     )
 }

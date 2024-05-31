@@ -74,6 +74,9 @@ fun ReservationCard(reservation: Reservation){
             //id user
             Text(text = "User ID: "+reservation.idOfUser.toString())
             Spacer(modifier = Modifier.height(5.dp))
+            //id car
+            Text(text = "Car ID: "+reservation.idOfCar.toString())
+            Spacer(modifier = Modifier.height(5.dp))
             //date
             Text(text = "Date: "+reservation.date)
             Spacer(modifier = Modifier.height(5.dp))
@@ -94,9 +97,6 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
         topBar = {
             TopAppBar(title = { Text(text = "Reservations") },
                 actions = {
-//                    IconButton(onClick = { showDialogEdit.value = true }) {
-//                        Icon(imageVector = Icons.Default.Edit, contentDescription = "Edit reservation")
-//                    }
                     IconButton(onClick = { showDialogDelete.value = true }) {
                         Icon(imageVector = Icons.Default.Delete, contentDescription = "Delete reservation")
                     }
@@ -162,6 +162,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
         var id by remember { mutableStateOf("") }
         var nameOfChargingStation by remember { mutableStateOf("") }
         var idOfUser by remember { mutableStateOf("") }
+        var idOfCar by remember { mutableStateOf("") }
         var date by remember { mutableStateOf("") }
         var startChargeTime by remember { mutableStateOf("") }
         var endChargeTime by remember { mutableStateOf("") }
@@ -176,6 +177,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
         LaunchedEffect(id) {
             reservationEdit.nameOfChargingStation = ""
             reservationEdit.idOfUser = 0
+            reservationEdit.idOfCar = 0
             reservationEdit.date = ""
             reservationEdit.StartChargeTime = ""
             reservationEdit.EndChargeTime = ""
@@ -187,6 +189,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
                     reservationEdit.idReservation = it.idReservation
                     reservationEdit.nameOfChargingStation = it.nameOfChargingStation
                     reservationEdit.idOfUser = it.idOfUser
+                    reservationEdit.idOfCar = it.idOfCar
                     reservationEdit.date = it.date
                     reservationEdit.StartChargeTime = it.StartChargeTime
                     reservationEdit.EndChargeTime = it.EndChargeTime
@@ -194,6 +197,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
 
                     nameOfChargingStation = it.nameOfChargingStation
                     idOfUser = it.idOfUser.toString()
+                    idOfCar = it.idOfCar.toString()
                     date = it.date
                     startChargeTime = it.StartChargeTime
                     endChargeTime = it.EndChargeTime
@@ -233,6 +237,11 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
                         label = { Text("Id of User") }
                     )
                     TextField(
+                        value = idOfCar,
+                        onValueChange = { idOfCar = it },
+                        label = { Text("Id of Car") }
+                    )
+                    TextField(
                         value = date,
                         onValueChange = { date = it },
                         label = { Text("Date") }
@@ -252,6 +261,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
                         Button(onClick = {
                             reservationEdit.nameOfChargingStation = ""
                             reservationEdit.idOfUser = 0
+                            reservationEdit.idOfCar = 0
                             reservationEdit.date = ""
                             reservationEdit.StartChargeTime = ""
                             reservationEdit.EndChargeTime = ""
@@ -265,6 +275,7 @@ fun Reservations(reservationViewModel: ReservationViewModel, goBack:() -> Unit,
                                 CoroutineScope(Dispatchers.Main).launch {
                                     reservationEdit.nameOfChargingStation = nameOfChargingStation
                                     reservationEdit.idOfUser = idOfUser.toInt()
+                                    reservationEdit.idOfCar = idOfCar.toInt()
                                     reservationEdit.date = date
                                     reservationEdit.StartChargeTime = startChargeTime
                                     reservationEdit.EndChargeTime = endChargeTime
