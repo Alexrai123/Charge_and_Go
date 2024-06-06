@@ -15,7 +15,8 @@ class OfflineReservationRepository(private val reservationDao: ReservationDao) :
         idReservation: Int,
         newDate: String,
         newStartChargeTime: String,
-        newEndChargeTime: String) = reservationDao.updateReservationDetails(idReservation, newDate, newStartChargeTime, newEndChargeTime)
+        newEndChargeTime: String,
+        totalCost: String) = reservationDao.updateReservationDetails(idReservation, newDate, newStartChargeTime, newEndChargeTime, totalCost)
     override suspend fun checkForOverlappingReservations(
         nameOfChargingStation: String,
         startChargeTime: String,
