@@ -19,8 +19,8 @@ interface ReservationDao {
     fun getReservationById(id: Int): Flow<Reservation>
     @Query("SELECT * FROM Reservation ORDER BY date ASC")
     fun getAllReservationsByData(): Flow<List<Reservation>>
-    @Query("UPDATE Reservation SET date = :newDate, StartChargeTime = :newStartChargeTime, EndChargeTime = :newEndChargeTime WHERE idReservation = :idReservation")
-    fun updateReservationDetails(idReservation: Int, newDate: String, newStartChargeTime: String, newEndChargeTime: String)
+    @Query("UPDATE Reservation SET date = :newDate, StartChargeTime = :newStartChargeTime, EndChargeTime = :newEndChargeTime, totalCost = :totalCost WHERE idReservation = :idReservation")
+    fun updateReservationDetails(idReservation: Int, newDate: String, newStartChargeTime: String, newEndChargeTime: String, totalCost: String)
     @Query("DELETE FROM Reservation WHERE idReservation = :id")
     suspend fun deleteReservationById(id: Int)
     @Query("""

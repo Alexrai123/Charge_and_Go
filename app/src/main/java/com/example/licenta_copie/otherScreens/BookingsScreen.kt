@@ -62,6 +62,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.time.Duration
 import java.time.LocalDate
 import java.time.LocalTime
 import java.time.format.DateTimeFormatter
@@ -100,7 +101,7 @@ fun isReservationCurrent(reservationDate: String, reservationTime: String): Bool
             // If the reservation date is today
             val formatterTime = DateTimeFormatter.ofPattern("HH:mm")
             val parsedTime = LocalTime.parse(reservationTime, formatterTime)
-            return !parsedTime.isBefore(currentTime.plusMinutes(5))
+            return !parsedTime.isBefore(currentTime.plusMinutes(1))
         }
         true
     } catch (e: DateTimeParseException) {
@@ -108,20 +109,25 @@ fun isReservationCurrent(reservationDate: String, reservationTime: String): Bool
         false
     }
 }
-fun isValidTimeInterval(startTime: String, endTime: String): Boolean {
+const val MAX_HOURS_ALLOWED = 2
+fun isValidTimeInterval(startTime: String, endTime: String, maxHours: Int = MAX_HOURS_ALLOWED): Boolean {
     return try {
-        val start = LocalTime.parse(startTime, DateTimeFormatter.ofPattern("HH:mm"))
-        val end = LocalTime.parse(endTime, DateTimeFormatter.ofPattern("HH:mm"))
-        !start.isAfter(end) && !start.equals(end)
+        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+        val start = LocalTime.parse(startTime, formatter)
+        val end = LocalTime.parse(endTime, formatter)
+
+        if (start.isAfter(end) || start == end) {
+            return false
+        }
+
+        val duration = Duration.between(start, end)
+        val hoursBetween = duration.toHours()
+
+        hoursBetween <= maxHours
     } catch (e: DateTimeParseException) {
         false
     }
 }
-//logare cu google sau facebook
-//trimite email de confirmare -(serviciu backend) nu prea, prin nr de telefon nici atat
-//pt  mai multe masini la profil, per user   facut
-//estimare cost +
-//marcheaza rezervarile curente, si alea inactive +
 fun submitReservation(date: String, startTime: String, endTime: String): String {
     if (!isValidDate(date)) {
         return "Please use 'dd-MM-yyyy' or choose a valid date."
@@ -130,10 +136,10 @@ fun submitReservation(date: String, startTime: String, endTime: String): String 
         return "Invalid time format. Please use 'HH:mm'."
     }
     if (!isValidTimeInterval(startTime, endTime)) {
-        return "End time must be after start time."
+        return "End time must be after start time and within the allowed duration (2 hours)."
     }
     if (!isReservationCurrent(date, startTime)) {
-        return "Reservation time must be at least 5 minutes in the future."
+        return "Reservation time must be at least 1 minute in the future."
     }
     return "Valid"
 }
@@ -159,6 +165,29 @@ fun isFutureReservation(date: String, startTime: String): Boolean {
         false
     }
 }
+fun calculateChargingCost(
+    startTime: String,
+    endTime: String,
+    chargingPower: Int, // kW
+    pricePerHour: Int // Currency units per hour
+): Double {
+    return try {
+        val formatter = DateTimeFormatter.ofPattern("HH:mm")
+        val start = LocalTime.parse(startTime, formatter)
+        val end = LocalTime.parse(endTime, formatter)
+
+        val duration = Duration.between(start, end)
+        val chargingDurationHours = duration.toMinutes() / 60.0
+
+        // Calculate the total cost based on charging duration
+        val totalCost = chargingDurationHours * pricePerHour
+        totalCost
+    } catch (e: DateTimeParseException) {
+        e.printStackTrace()
+        0.0
+    }
+}
+
 @Composable
 fun ReservationCard(reservation: Reservation) {
     val cardColor = if (isFutureReservation(reservation.date, reservation.StartChargeTime)) {
@@ -188,7 +217,7 @@ fun ReservationCard(reservation: Reservation) {
             Spacer(modifier = Modifier.height(5.dp))
             Text(text = "Time: ${reservation.StartChargeTime} - ${reservation.EndChargeTime}")
             Spacer(modifier = Modifier.height(5.dp))
-            // Optionally include other details like price, if needed
+            Text(text = "Total price: ${reservation.totalCost} lei")
         }
     }
 }
@@ -203,11 +232,13 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
     var date by remember { mutableStateOf("") }
     var startChargeTime by remember { mutableStateOf("") }
     var endChargeTime by remember { mutableStateOf("") }
+    var currentBatteryLevel by remember { mutableStateOf("") }
+    var desiredBatteryLevel by remember { mutableStateOf("") }
     val newReservation by remember { mutableStateOf(Reservation()) }
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
     val notification = remember{ mutableStateOf("") }
     var pricePerHour by remember { mutableIntStateOf(0) }
-    val totalCost by remember { mutableDoubleStateOf(0.0)}
+    var totalCost by remember { mutableDoubleStateOf(0.0)}
     if(notification.value.isNotEmpty()){
         Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
         notification.value = " "
@@ -270,13 +301,13 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
             )) {
             Card(modifier = Modifier
                 .fillMaxWidth()
-                .height(455.dp)
+                .height(450.dp)
                 .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
                 Column(modifier = Modifier.padding(5.dp)) {
                     Text(
-                        text = "Add Reservation",
+                        text = "Add reservation",
                     )
                     TextField(//id of charging station
                         value = nameChargingStation,
@@ -308,6 +339,18 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         onValueChange = {endChargeTime = it},
                         label = { Text("End Time") }
                     )
+//                    TextField(
+//                        value = currentBatteryLevel,
+//                        onValueChange = {currentBatteryLevel = it},
+//                        label = { Text("Current Battery Level") },
+//                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+//                    )
+//                    TextField(
+//                        value = desiredBatteryLevel,
+//                        onValueChange = {desiredBatteryLevel = it},
+//                        label = { Text("Desired Battery Level") },
+//                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
+//                    )
                     Spacer(modifier = Modifier.height(15.dp))
                     Row(horizontalArrangement = Arrangement.SpaceEvenly) {
                         Button(onClick = {
@@ -316,6 +359,8 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                 startChargeTime = ""
                                 endChargeTime = ""
                                 date = ""
+//                                currentBatteryLevel = ""
+//                                desiredBatteryLevel = ""
                                 showDialog.value = false
                             }
                         ) {
@@ -351,12 +396,18 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                                     newReservation.date = date
                                                     newReservation.StartChargeTime = startChargeTime
                                                     newReservation.EndChargeTime = endChargeTime
-                                                    newReservation.totalCost = totalCost
                                                     delay(1000)
                                                     pricePerHour =
                                                         chargingStationRepository.getChargingStationByName(
                                                             nameChargingStation
                                                         ).firstOrNull()?.pricePerHour ?: 0
+                                                    newReservation.totalCost =
+                                                        calculateChargingCost(
+                                                            startChargeTime,
+                                                            endChargeTime,
+                                                            chargingStation.chargingPower_kW,
+                                                            pricePerHour
+                                                        )
                                                     reservationRepository.insertReservation(
                                                         newReservation
                                                     )
@@ -446,7 +497,6 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
         var id by remember { mutableStateOf("") }
         var nameOfChargingStation by remember { mutableStateOf("") }
         var idOfUser by remember { mutableStateOf("") }
-        var totalCost by remember { mutableDoubleStateOf(0.0) }
 
         val reservationRepository = OfflineReservationRepository(
             reservationDao = AppDatabase.getDatabase(LocalContext.current).reservationDao()
@@ -575,12 +625,19 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                                     reservationEdit.date = date
                                                     reservationEdit.StartChargeTime = startChargeTime
                                                     reservationEdit.EndChargeTime = endChargeTime
-                                                    reservationEdit.totalCost = totalCost
+                                                    reservationEdit.totalCost =
+                                                        calculateChargingCost(
+                                                            startChargeTime,
+                                                            endChargeTime,
+                                                            chargingStation.chargingPower_kW,
+                                                            pricePerHour
+                                                        )
                                                     reservationRepository.updateReservationDetails(
                                                         reservationEdit.idReservation,
                                                         reservationEdit.date,
                                                         reservationEdit.StartChargeTime,
-                                                        reservationEdit.EndChargeTime
+                                                        reservationEdit.EndChargeTime,
+                                                        reservationEdit.totalCost.toString()
                                                     )
                                                     withContext(Dispatchers.Main) {
                                                         notification.value = "Reservation modified successfully."
