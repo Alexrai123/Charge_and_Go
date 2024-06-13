@@ -181,12 +181,18 @@ fun CarsScreen(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedV
                         }
                         Button(modifier = Modifier.padding(start = 65.dp),
                             onClick = {
-                                CoroutineScope(Dispatchers.IO).launch {
-                                    newCar.model = model
-                                    newCar.licensePlate = licensePlate
-                                    newCar.batteryCapacity = batteryCapacity.toInt()
-                                    carRepository.insertCar(newCar)
-                                    showDialogAddCar.value = false
+                                CoroutineScope(Dispatchers.Main).launch {
+                                    val exists = carRepository.existsBylicensePlate(licensePlate)
+                                    if (exists){
+                                        notification.value = "License plate already exists!"
+                                    }
+                                    else {
+                                        newCar.model = model
+                                        newCar.licensePlate = licensePlate
+                                        newCar.batteryCapacity = batteryCapacity.toInt()
+                                        carRepository.insertCar(newCar)
+                                        showDialogAddCar.value = false
+                                    }
                                 }
                             }
                         ) {
@@ -275,12 +281,18 @@ fun CarsScreen(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedV
                         Button(modifier = Modifier.padding(start = 85.dp),
                             onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    carEdit.ownerId = ownerId.toInt()
-                                    carEdit.model = model
-                                    carEdit.licensePlate = licensePlate
-                                    carEdit.batteryCapacity = batteryCapacity.toInt()
-                                    carRepository.updateCar(carEdit)
-                                    showDialogEditCar.value = false
+                                    val exists = carRepository.existsBylicensePlate(licensePlate)
+                                    if (exists){
+                                        notification.value = "License plate already exists!"
+                                    }
+                                    else {
+                                        carEdit.ownerId = ownerId.toInt()
+                                        carEdit.model = model
+                                        carEdit.licensePlate = licensePlate
+                                        carEdit.batteryCapacity = batteryCapacity.toInt()
+                                        carRepository.updateCar(carEdit)
+                                        showDialogEditCar.value = false
+                                    }
                                 }
                             }
                         ) {
