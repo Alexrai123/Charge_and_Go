@@ -228,7 +228,7 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
                         ) {
                             Text("Cancel")
                         }
-                        Button(modifier = Modifier.padding(start = 95.dp),
+                        Button(modifier = Modifier.padding(start = 75.dp),
                             onClick = {
                             CoroutineScope(Dispatchers.Main).launch {
                                 newChargingStation.lat = lat.toDouble()

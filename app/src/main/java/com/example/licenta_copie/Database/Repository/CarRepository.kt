@@ -7,6 +7,7 @@ interface CarRepository {
     fun getAllCarsStream(): Flow<List<Car>>
     fun getCarByOwnerId(ownerId: Int): Flow<Car?>
     fun getCarsByOwnerId(ownerId: Int): Flow<List<Car>>
+    suspend fun existsBylicensePlate(licensePlate: String): Boolean
     suspend fun existsById(carId: Int): Boolean
     fun countCarsByOwnerId(ownerId: Int): Int
     fun getBatteryCapacityById(id: Int): Flow<Int>

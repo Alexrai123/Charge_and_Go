@@ -1,5 +1,6 @@
 package com.example.licenta_copie.Admin
 
+import android.widget.Toast
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -85,6 +86,11 @@ fun CarCard(car: Car){
 fun Cars(carViewModel: CarViewModel, goBack:() -> Unit,
          showDialogDelete: MutableState<Boolean>, showDialogEdit: MutableState<Boolean>){
     val cars by carViewModel.cars.collectAsState(initial = emptyList())
+    val notification = remember{ mutableStateOf("") }
+    if(notification.value.isNotEmpty()){
+        Toast.makeText(LocalContext.current, notification.value, Toast.LENGTH_LONG).show()
+        notification.value = " "
+    }
     Scaffold(
         topBar = {
             TopAppBar(title = { Text(text = "Cars") },
@@ -242,12 +248,18 @@ fun Cars(carViewModel: CarViewModel, goBack:() -> Unit,
                         Button(modifier = Modifier.padding(start = 95.dp),
                             onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    carEdit.ownerId = ownerId.toInt()
-                                    carEdit.model = model
-                                    carEdit.licensePlate = licensePlate
-                                    carEdit.batteryCapacity = batteryCapacity.toInt()
-                                    carRepository.updateCar(carEdit)
-                                    showDialogEdit.value = false
+                                    val exists = carRepository.existsBylicensePlate(licensePlate)
+                                    if (exists){
+                                        notification.value = "License plate already exists!"
+                                    }
+                                    else {
+                                        carEdit.ownerId = ownerId.toInt()
+                                        carEdit.model = model
+                                        carEdit.licensePlate = licensePlate
+                                        carEdit.batteryCapacity = batteryCapacity.toInt()
+                                        carRepository.updateCar(carEdit)
+                                        showDialogEdit.value = false
+                                    }
                                 }
                             }
                         ) {
