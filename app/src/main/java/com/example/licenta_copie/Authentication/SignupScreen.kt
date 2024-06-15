@@ -37,7 +37,6 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.licenta_copie.Database.AppDatabase
 import com.example.licenta_copie.Database.Entity.User
@@ -95,7 +94,7 @@ fun SignupScreen(onSign: () -> Unit) {
                         }
                     } else {
                         withContext(Dispatchers.Main) {
-                            notification.value = "This user already exists!"
+                            notification.value = "This email or phone number is already used!"
                         }
                     }
                 }
@@ -228,12 +227,5 @@ private fun TopSection() {
             style = MaterialTheme.typography.headlineLarge,
             color = uiColor
         )
-    }
-}
-@Composable
-@Preview
-fun preview(){
-    SignupScreen {
-
     }
 }
