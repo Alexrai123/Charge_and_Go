@@ -186,7 +186,7 @@ fun Users(userViewModel: UserViewModel, goBack:() -> Unit,
             )) {
             Card(modifier = Modifier
                 .fillMaxWidth()
-                .height(455.dp)
+                .height(305.dp)
                 .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
@@ -218,7 +218,7 @@ fun Users(userViewModel: UserViewModel, goBack:() -> Unit,
                         }){
                             Text("Cancel")
                         }
-                        Button(modifier = Modifier.padding(start = 95.dp),
+                        Button(modifier = Modifier.padding(start = 75.dp),
                             onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
                                     userEdit.email = email

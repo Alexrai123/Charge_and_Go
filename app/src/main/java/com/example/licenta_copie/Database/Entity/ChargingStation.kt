@@ -9,6 +9,5 @@ data class ChargingStation(
     var lat: Double = 0.0,
     var lng: Double = 0.0,
     var chargingPower_kW: Int = 0,
-    var nrOfChargingPorts: Int = 0,
     var pricePerHour: Int = 0
 )

@@ -53,7 +53,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.firstOrNull
 import kotlinx.coroutines.launch
-
 @Composable
 fun CarCard(car: Car){
     Card(modifier = Modifier
@@ -200,13 +199,13 @@ fun Cars(carViewModel: CarViewModel, goBack:() -> Unit,
             )) {
             Card(modifier = Modifier
                 .fillMaxWidth()
-                .height(455.dp)
+                .height(345.dp)
                 .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
                 Column(modifier = Modifier.padding(5.dp)) {
                     Text(
-                        text = "Edit User",
+                        text = "Edit Car",
                     )
                     TextField(
                         value = id,
@@ -217,11 +216,6 @@ fun Cars(carViewModel: CarViewModel, goBack:() -> Unit,
                         value = ownerId,
                         onValueChange = { ownerId = it },
                         label = { Text("Owner Id") }
-                    )
-                    TextField(
-                        value = model,
-                        onValueChange = { model = it },
-                        label = { Text("Model") }
                     )
                     TextField(
                         value = licensePlate,
@@ -245,10 +239,10 @@ fun Cars(carViewModel: CarViewModel, goBack:() -> Unit,
                         }){
                             Text("Cancel")
                         }
-                        Button(modifier = Modifier.padding(start = 95.dp),
+                        Button(modifier = Modifier.padding(start = 75.dp),
                             onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    val exists = carRepository.existsBylicensePlate(licensePlate)
+                                    val exists = carRepository.existsByLicensePlateExcludingId(licensePlate, id.toInt())
                                     if (exists){
                                         notification.value = "License plate already exists!"
                                     }

@@ -3,11 +3,9 @@ package com.example.licenta_copie.Database.Entity
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.PrimaryKey
-import androidx.room.Index
 
 @Entity(tableName = "Car", foreignKeys = [
-    ForeignKey(entity = User::class, parentColumns = ["id"], childColumns = ["ownerId"], onDelete = ForeignKey.CASCADE, onUpdate = ForeignKey.CASCADE)],
-    indices = [Index(value = ["licensePlate"], unique = true)]
+    ForeignKey(entity = User::class, parentColumns = ["id"], childColumns = ["ownerId"], onDelete = ForeignKey.CASCADE, onUpdate = ForeignKey.CASCADE)]
 )
 data class Car(
     @PrimaryKey(autoGenerate = true)

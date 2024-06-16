@@ -109,20 +109,17 @@ fun isReservationCurrent(reservationDate: String, reservationTime: String): Bool
         false
     }
 }
-const val MAX_HOURS_ALLOWED = 2
+const val MAX_HOURS_ALLOWED = 10
 fun isValidTimeInterval(startTime: String, endTime: String, maxHours: Int = MAX_HOURS_ALLOWED): Boolean {
     return try {
         val formatter = DateTimeFormatter.ofPattern("HH:mm")
         val start = LocalTime.parse(startTime, formatter)
         val end = LocalTime.parse(endTime, formatter)
-
         if (start.isAfter(end) || start == end) {
             return false
         }
-
         val duration = Duration.between(start, end)
         val hoursBetween = duration.toHours()
-
         hoursBetween <= maxHours
     } catch (e: DateTimeParseException) {
         false
@@ -136,7 +133,7 @@ fun submitReservation(date: String, startTime: String, endTime: String): String 
         return "Invalid time format. Please use 'HH:mm'."
     }
     if (!isValidTimeInterval(startTime, endTime)) {
-        return "End time must be after start time and within the allowed duration (2 hours)."
+        return "End time must be after start time and within the allowed duration (10 hours)."
     }
     if (!isReservationCurrent(date, startTime)) {
         return "Reservation time must be at least 1 minute in the future."
@@ -165,10 +162,10 @@ fun isFutureReservation(date: String, startTime: String): Boolean {
         false
     }
 }
+@SuppressLint("DefaultLocale")
 fun calculateChargingCost(
     startTime: String,
     endTime: String,
-    chargingPower: Int, // kW
     pricePerHour: Int // Currency units per hour
 ): Double {
     return try {
@@ -181,6 +178,7 @@ fun calculateChargingCost(
 
         // Calculate the total cost based on charging duration
         val totalCost = chargingDurationHours * pricePerHour
+        String.format("%.2f", totalCost).toDouble()
         totalCost
     } catch (e: DateTimeParseException) {
         e.printStackTrace()
@@ -232,8 +230,6 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
     var date by remember { mutableStateOf("") }
     var startChargeTime by remember { mutableStateOf("") }
     var endChargeTime by remember { mutableStateOf("") }
-    var currentBatteryLevel by remember { mutableStateOf("") }
-    var desiredBatteryLevel by remember { mutableStateOf("") }
     val newReservation by remember { mutableStateOf(Reservation()) }
     val reservations by reservationViewModel.reservations.collectAsState(initial = emptyList())
     val notification = remember{ mutableStateOf("") }
@@ -339,18 +335,6 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                         onValueChange = {endChargeTime = it},
                         label = { Text("End Time") }
                     )
-//                    TextField(
-//                        value = currentBatteryLevel,
-//                        onValueChange = {currentBatteryLevel = it},
-//                        label = { Text("Current Battery Level") },
-//                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-//                    )
-//                    TextField(
-//                        value = desiredBatteryLevel,
-//                        onValueChange = {desiredBatteryLevel = it},
-//                        label = { Text("Desired Battery Level") },
-//                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number)
-//                    )
                     Spacer(modifier = Modifier.height(15.dp))
                     Row(horizontalArrangement = Arrangement.SpaceEvenly) {
                         Button(onClick = {
@@ -359,8 +343,6 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                 startChargeTime = ""
                                 endChargeTime = ""
                                 date = ""
-//                                currentBatteryLevel = ""
-//                                desiredBatteryLevel = ""
                                 showDialog.value = false
                             }
                         ) {
@@ -405,7 +387,6 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                                         calculateChargingCost(
                                                             startChargeTime,
                                                             endChargeTime,
-                                                            chargingStation.chargingPower_kW,
                                                             pricePerHour
                                                         )
                                                     reservationRepository.insertReservation(
@@ -629,7 +610,6 @@ fun Bookings(reservationViewModel: ReservationViewModel, showDialog: MutableStat
                                                         calculateChargingCost(
                                                             startChargeTime,
                                                             endChargeTime,
-                                                            chargingStation.chargingPower_kW,
                                                             pricePerHour
                                                         )
                                                     reservationRepository.updateReservationDetails(

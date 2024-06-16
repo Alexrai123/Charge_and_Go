@@ -21,12 +21,16 @@ interface CarDao {
     suspend fun existsById(carId: Int): Boolean
     @Query("SELECT EXISTS(SELECT 1 FROM Car WHERE licensePlate = :licensePlate)")
     suspend fun existsBylicensePlate(licensePlate: String): Boolean
+    @Query("SELECT EXISTS(SELECT 1 FROM Car WHERE licensePlate = :licensePlate AND id != :carId)")
+    suspend fun existsByLicensePlateExcludingId(licensePlate: String, carId: Int): Boolean
     @Query("SELECT COUNT(*) FROM Car WHERE ownerId = :ownerId")
     fun countCarsByOwnerId(ownerId: Int): Int
     @Query("SELECT batteryCapacity FROM Car WHERE id = :id")
     fun getBatteryCapacityById(id: Int): Flow<Int>
     @Query("SELECT * from Car WHERE id = :id")
     fun getCarById(id: Int): Flow<Car>
+    @Query("SELECT * from Car WHERE id = :id AND ownerId = :ownerId")
+    fun getCarByIdAndOwnerId(id: Int, ownerId: Int): Flow<Car>
     @Query("DELETE FROM Car WHERE id = :id")
     suspend fun deleteCarById(id: Int)
     @Insert(onConflict = OnConflictStrategy.ABORT)

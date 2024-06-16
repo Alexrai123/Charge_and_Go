@@ -238,7 +238,7 @@ fun CarsScreen(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedV
             )) {
             Card(modifier = Modifier
                 .fillMaxWidth()
-                .height(455.dp)
+                .height(340.dp)
                 .padding(16.dp),
                 shape = RoundedCornerShape(16.dp),
             ) {
@@ -281,7 +281,7 @@ fun CarsScreen(showDialogAddCar: MutableState<Boolean>, sharedViewModel: SharedV
                         Button(modifier = Modifier.padding(start = 85.dp),
                             onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
-                                    val exists = carRepository.existsBylicensePlate(licensePlate)
+                                    val exists = carRepository.existsByLicensePlateExcludingId(licensePlate, id.toInt())
                                     if (exists){
                                         notification.value = "License plate already exists!"
                                     }

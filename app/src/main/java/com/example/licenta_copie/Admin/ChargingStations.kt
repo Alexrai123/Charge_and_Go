@@ -74,8 +74,6 @@ fun ReservationCard(chargingStation: ChargingStation){
             //charging power
             Text(text = "Charging Power (kW): "+chargingStation.chargingPower_kW.toString())
             Spacer(modifier = Modifier.height(5.dp))
-            //nr of charging ports
-            Text(text = "Number of charging ports: "+chargingStation.nrOfChargingPorts.toString())
             //price per hour
             Text(text = "Price per hour: "+chargingStation.pricePerHour.toString())
         }
@@ -163,7 +161,6 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
         var lng by remember { mutableStateOf("") }
         var name by remember { mutableStateOf("") }
         var chargingPower_kW by remember { mutableStateOf("") }
-        var nrOfChargingPorts by remember { mutableStateOf("") }
         var pricePerHour by remember { mutableStateOf("") }
         val newChargingStation by remember { mutableStateOf(ChargingStation()) }
         val chargingStationRepository = OfflineChargingStationRepository(
@@ -205,11 +202,6 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
                         label = { Text("Charging Power (kW)") }
                     )
                     TextField(
-                        value = nrOfChargingPorts,
-                        onValueChange = {nrOfChargingPorts = it},
-                        label = { Text("Number Of Charging Ports") }
-                    )
-                    TextField(
                         value = pricePerHour,
                         onValueChange = {pricePerHour = it},
                         label = { Text("Price Per Hour") }
@@ -221,7 +213,6 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
                             lng = ""
                             name = ""
                             chargingPower_kW = ""
-                            nrOfChargingPorts = ""
                             pricePerHour = ""
                             showDialogAdd.value = false
                         }
@@ -235,7 +226,6 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
                                 newChargingStation.lng = lng.toDouble()
                                 newChargingStation.name = name
                                 newChargingStation.chargingPower_kW = chargingPower_kW.toInt()
-                                newChargingStation.nrOfChargingPorts = nrOfChargingPorts.toInt()
                                 newChargingStation.pricePerHour = pricePerHour.toInt()
                                 chargingStationRepository.insertChargingStation(newChargingStation)
                                 showDialogAdd.value = false
@@ -254,7 +244,6 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
         var lat by remember { mutableStateOf("") }
         var lng by remember { mutableStateOf("") }
         var chargingPower_kW by remember { mutableStateOf("") }
-        var nrOfChargingPorts by remember { mutableStateOf("") }
         var pricePerHour by remember { mutableStateOf("") }
         val chargingStationRepository = OfflineChargingStationRepository(
             chargingStationDao = AppDatabase.getDatabase(LocalContext.current).chargingStationDao()
@@ -264,7 +253,6 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
             chargingStationEdit.lat = 0.0
             chargingStationEdit.lng = 0.0
             chargingStationEdit.chargingPower_kW = 0
-            chargingStationEdit.nrOfChargingPorts = 0
             chargingStationEdit.pricePerHour = 0
             if(name.isNotEmpty()){
                 delay(500)
@@ -274,13 +262,11 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
                     chargingStationEdit.lat = it.lat
                     chargingStationEdit.lng = it.lng
                     chargingStationEdit.chargingPower_kW = it.chargingPower_kW
-                    chargingStationEdit.nrOfChargingPorts = it.nrOfChargingPorts
                     chargingStationEdit.pricePerHour = it.pricePerHour
 
                     lat = it.lat.toString()
                     lng = it.lng.toString()
                     chargingPower_kW = it.chargingPower_kW.toString()
-                    nrOfChargingPorts = it.nrOfChargingPorts.toString()
                     pricePerHour = it.pricePerHour.toString()
                 }
                 delay(500)
@@ -322,11 +308,6 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
                         label = { Text("Charging Power (kW)") }
                     )
                     TextField(
-                        value = nrOfChargingPorts,
-                        onValueChange = { nrOfChargingPorts = it },
-                        label = { Text("Number Of Charging Ports") }
-                    )
-                    TextField(
                         value = pricePerHour,
                         onValueChange = { pricePerHour = it },
                         label = { Text("Price Per Hour") }
@@ -337,19 +318,17 @@ fun ChargingStations(chargingStationViewModel: ChargingStationViewModel, goBack:
                             chargingStationEdit.lat = 0.0
                             chargingStationEdit.lng = 0.0
                             chargingStationEdit.chargingPower_kW = 0
-                            chargingStationEdit.nrOfChargingPorts = 0
                             chargingStationEdit.pricePerHour = 0
                             showDialogEdit.value = false
                         }){
                             Text("Cancel")
                         }
-                        Button(modifier = Modifier.padding(start = 95.dp),
+                        Button(modifier = Modifier.padding(start = 75.dp),
                             onClick = {
                                 CoroutineScope(Dispatchers.Main).launch {
                                     chargingStationEdit.lat = lat.toDouble()
                                     chargingStationEdit.lng = lng.toDouble()
                                     chargingStationEdit.chargingPower_kW = chargingPower_kW.toInt()
-                                    chargingStationEdit.nrOfChargingPorts = nrOfChargingPorts.toInt()
                                     chargingStationEdit.pricePerHour = pricePerHour.toInt()
                                     chargingStationRepository.updateChargingStation(chargingStationEdit)
                                     showDialogEdit.value = false

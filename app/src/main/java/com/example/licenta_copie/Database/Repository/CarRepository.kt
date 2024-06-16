@@ -8,10 +8,12 @@ interface CarRepository {
     fun getCarByOwnerId(ownerId: Int): Flow<Car?>
     fun getCarsByOwnerId(ownerId: Int): Flow<List<Car>>
     suspend fun existsBylicensePlate(licensePlate: String): Boolean
+    suspend fun existsByLicensePlateExcludingId(licensePlate: String, carId: Int): Boolean
     suspend fun existsById(carId: Int): Boolean
     fun countCarsByOwnerId(ownerId: Int): Int
     fun getBatteryCapacityById(id: Int): Flow<Int>
     fun getCarById(id: Int): Flow<Car?>
+    fun getCarByIdAndOwnerId(id: Int, ownerId: Int): Flow<Car?>
     suspend fun deleteCarById(id: Int)
     suspend fun insertCar(car: Car)
     suspend fun deleteCar(car: Car)
